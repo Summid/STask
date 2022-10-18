@@ -9,7 +9,7 @@ namespace SFramework.Threading.Tasks.Internal
     /// 为优化方法调用性能，一些方法声明为内联调用
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public class MinimumQueue<T>
+    internal class MinimumQueue<T>
     {
         /// <summary> 每次扩容的最小值 </summary>
         private const int MinimumGrow = 4;
@@ -127,14 +127,14 @@ namespace SFramework.Threading.Tasks.Internal
                     Array.Copy(this.array, this.head, newArray, 0, this.array.Length - this.head);//先复制头指针后面的
                     Array.Copy(this.array, 0, newArray, this.array.Length - this.head, this.tail);//再复制尾指针前面的
                 }
-
-                this.array = newArray;
-                this.head = 0;
-                this.tail = this.size == capacity ? 0 : this.size;
-                //size等于capacity时特殊处理，此时尾指针应该指向索引0位置（循环队列），从结果来看，扩容前后的数组没有区别
-                //这个处理有点令人疑惑，因为要capacity与size相等几乎不可能（在MinimumGrow的限制下），但为了防止以后复制粘贴出错，还是加上
-                //那么当capacity小于size时的情况呢？=> Array.Copy会抛出ArgumentException异常，因此这里就不处理了
             }
+
+            this.array = newArray;
+            this.head = 0;
+            this.tail = this.size == capacity ? 0 : this.size;
+            //size等于capacity时特殊处理，此时尾指针应该指向索引0位置（循环队列），从结果来看，扩容前后的数组没有区别
+            //这个处理有点令人疑惑，因为要capacity与size相等几乎不可能（在MinimumGrow的限制下），但为了防止以后复制粘贴出错，还是加上
+            //那么当capacity小于size时的情况呢？=> Array.Copy会抛出ArgumentException异常，因此这里就不处理了
         }
 
 
