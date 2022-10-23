@@ -1,34 +1,36 @@
-/// <summary>
-/// STask新增的自定义PlayerLoop
-/// </summary>
-public enum PlayerLoopTiming
+namespace SFramework.Threading.Tasks
 {
-    Initialization = 0,
-    LastInitialization = 1,
+    /// <summary>
+    /// STask新增的自定义PlayerLoop
+    /// </summary>
+    public enum PlayerLoopTiming
+    {
+        Initialization = 0,
+        LastInitialization = 1,
 
-    EarlyUpdate = 2,
-    LastEarlyUpdate = 3,
+        EarlyUpdate = 2,
+        LastEarlyUpdate = 3,
 
-    FixedUpdate = 4,
-    LastFixedUpdate = 5,
+        FixedUpdate = 4,
+        LastFixedUpdate = 5,
 
-    PreUpdate = 6,
-    LastPreUpdate = 7,
+        PreUpdate = 6,
+        LastPreUpdate = 7,
 
-    Update = 8,
-    LastUpdate = 9,
+        Update = 8,
+        LastUpdate = 9,
 
-    PreLateUpdate = 10,
-    LastPreLateUpdate = 11,
+        PreLateUpdate = 10,
+        LastPreLateUpdate = 11,
 
-    PostLateUpdate = 12,
-    LastPostLateUpdate = 13,
+        PostLateUpdate = 12,
+        LastPostLateUpdate = 13,
 
-    //需要Unity2022.2及以上版本支持 https://docs.unity3d.com/2020.2/Documentation/ScriptReference/PlayerLoop.TimeUpdate.html
-    TimeUpdate = 14,
-    LastTimeUpdate = 15,
+        //需要Unity2022.2及以上版本支持 https://docs.unity3d.com/2020.2/Documentation/ScriptReference/PlayerLoop.TimeUpdate.html
+        TimeUpdate = 14,
+        LastTimeUpdate = 15,
+    }
 }
-
 //Initialization
 //-- -
 //**UniTaskLoopRunnerYieldInitialization * *
