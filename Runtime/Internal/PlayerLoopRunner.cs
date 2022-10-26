@@ -4,19 +4,19 @@ using UnityEngine;
 namespace SFramework.Threading.Tasks.Internal
 {
     /// <summary>
-    /// PlayerLoopSystem的迭代功能的实现，字如其人
+    /// PlayerLoopSystem的迭代功能的实现，字如其人。
     /// 多线程安全
     /// </summary>
     /// 
     /// <remarks>
-    /// 被迭代对象可能存在于多个（Unity）生命周期中，迭代是否完成由IPlayerLoopItem实现
-    /// 由于不确定IPlayerLoopItem.MoveNext()的执行效率，因此使用混合线程锁（Monitor）
+    /// 被迭代对象可能存在于多个（Unity）生命周期中，迭代是否完成由IPlayerLoopItem实现。
+    /// 由于不确定IPlayerLoopItem.MoveNext()的执行结果，可能会有比较多Item存在于数组中，迭代一次需要花费较多时间，因此这里用混合多线程锁（Monitor）
     /// </remarks>
     internal sealed class PlayerLoopRunner
     {
         const int InitialSize = 16;
 
-        /// <summary> 当前Runner处于的timing </summary>
+        /// <summary> 当前Runner在哪个timing迭代 </summary>
         private readonly PlayerLoopTiming timing;
 
         /// <summary> <see cref="running"/> 与 <see cref="waitQueue"/>线程锁 </summary>
@@ -62,7 +62,7 @@ namespace SFramework.Threading.Tasks.Internal
             {
                 if (this.loopItems.Length == this.tail)
                 {
-                    //当数组里没空位了，扩容；扩容大小为目前的两倍，对 tail*2 进行溢出检查
+                    //当数组里没空位了，扩容；扩容大小为目前的两倍，对 tail*2 进行溢出检查，当数值溢出时将抛出异常
                     Array.Resize(ref this.loopItems, checked(this.tail * 2));
                 }
                 this.loopItems[this.tail++] = item;
