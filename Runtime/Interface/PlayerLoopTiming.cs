@@ -26,7 +26,7 @@ namespace SFramework.Threading.Tasks
         PostLateUpdate = 12,
         LastPostLateUpdate = 13,
 
-        //需要Unity2022.2及以上版本支持 https://docs.unity3d.com/2020.2/Documentation/ScriptReference/PlayerLoop.TimeUpdate.html
+        //需要Unity2020.2及以上版本支持 https://docs.unity3d.com/2020.2/Documentation/ScriptReference/PlayerLoop.TimeUpdate.html
         TimeUpdate = 14,
         LastTimeUpdate = 15,
     }
