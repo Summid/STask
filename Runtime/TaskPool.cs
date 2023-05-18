@@ -1,15 +1,14 @@
 using System;
-using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
-using UnityEngine;
 
 namespace SFramework.Threading.Tasks
 {
     /// <summary>
-    /// TaskPool工具类，提供获取对象池容量的接口，不实现对象池功能
+    /// TaskPool工具类，提供获取对象池大小接口，不实现对象池功能
     /// </summary>
     public static class TaskPool
     {
@@ -46,14 +45,14 @@ namespace SFramework.Threading.Tasks
         {
             lock (sizes)
             {
-                foreach (var item in sizes)
+                foreach(var item in sizes)
                 {
                     yield return (item.Key, item.Value());
-                } 
+                }
             }
         }
 
-        public static void RegisterSizeGetter(Type type, Func<int> getSize)
+        public static void RegisterSizeGetter(Type type,Func<int> getSize)
         {
             lock (sizes)
             {
@@ -72,25 +71,25 @@ namespace SFramework.Threading.Tasks
     {
         private int gate;
         private int size;
-        private T root;//root为链表头，出队与入队都在root位置操作；node0 <-- node1 <-- node2 <-- node3 (root), node3's NextNode is node2
+        private T root;//root为链表头，出队与入队都在root位置操作
 
         public int Size => this.size;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryPop(out T result)
         {
-            //if gate equals 'comparand', it will be replaced by 'value', return original value in 'location1'
+            //if gate equals comparand, it will be replaced by value, return original value in location1
             if (Interlocked.CompareExchange(ref this.gate, 1, 0) == 0)
             {
                 T v = this.root;
                 if (!(v is null))
                 {
-                    ref T nextNode = ref v.NextNode;
+                    ref var nextNode = ref v.NextNode;
                     this.root = nextNode;
                     nextNode = null;
                     this.size--;
                     result = v;
-                    //The 'Volatile.Write' method forces the value in 'location' to be written to at the point of the call.
+                    //The `Volatile.Write` method forces the value in location to be written to at the point of the call.
                     //In addition, any earlier program-order loads and stores must occur before the call to Volatile.Write.
                     Volatile.Write(ref this.gate, 0);
                     return true;
@@ -98,7 +97,6 @@ namespace SFramework.Threading.Tasks
 
                 Volatile.Write(ref this.gate, 0);
             }
-
             result = default;
             return false;
         }
@@ -116,10 +114,11 @@ namespace SFramework.Threading.Tasks
                     Volatile.Write(ref this.gate, 0);
                     return true;
                 }
-
-                Volatile.Write(ref this.gate, 0);
+                else
+                {
+                    Volatile.Write(ref this.gate, 0);
+                }
             }
-
             return false;
         }
     }

@@ -4,7 +4,7 @@ using System.Threading;
 namespace SFramework.Threading.Tasks.Internal
 {
     /// <summary>
-    /// PlaeryLoopSystem的迭代功能的实现，与PlayerLoopRunner不同，这里的迭代对象只执行一次。
+    /// PlayerLoopSystem的迭代功能的实现，与PlayerLoopRunner不同，这里的迭代对象只执行一次。
     /// 多线程安全
     /// </summary>
     /// 
@@ -60,7 +60,8 @@ namespace SFramework.Threading.Tasks.Internal
                     {
                         //扩容
                         int newLength = this.waitingListCount * 2;
-                        if ((uint)newLength > MaxArrayLength) newLength = MaxArrayLength;//确保不溢出，且无异常触发
+                        if ((uint)newLength > MaxArrayLength)
+                            newLength = MaxArrayLength;//确保不溢出，且无异常触发
 
                         Action[] newArray = new Action[newLength];
                         Array.Copy(this.waitingList, newArray, this.waitingListCount);
@@ -74,10 +75,11 @@ namespace SFramework.Threading.Tasks.Internal
                     {
                         //扩容
                         int newLength = this.actionListCount * 2;
-                        if((uint)newLength>MaxArrayLength) newLength = MaxArrayLength;
+                        if ((uint)newLength > MaxArrayLength)
+                            newLength = MaxArrayLength;
 
                         Action[] newArray = new Action[newLength];
-                        Array.Copy(this.actionList, newArray, actionListCount);
+                        Array.Copy(this.actionList, newArray, this.actionListCount);
                     }
                     this.actionList[this.actionListCount] = continuation;
                     this.actionListCount++;
@@ -85,7 +87,8 @@ namespace SFramework.Threading.Tasks.Internal
             }
             finally
             {
-                if(lockTaken) this.gate.Exit(false);
+                if (lockTaken)
+                    this.gate.Exit(false);
             }
         }
 
@@ -202,12 +205,14 @@ namespace SFramework.Threading.Tasks.Internal
                 try
                 {
                     this.gate.Enter(ref lockTaken);
-                    if (this.actionListCount == 0) return;
+                    if (this.actionListCount == 0)
+                        return;
                     this.dequing = true;
                 }
                 finally
                 {
-                    if (lockTaken) this.gate.Exit(false);
+                    if (lockTaken)
+                        this.gate.Exit(false);
                 }
             }
 
@@ -245,7 +250,8 @@ namespace SFramework.Threading.Tasks.Internal
                 }
                 finally
                 {
-                    if(lockTaken) this.gate.Exit(false);
+                    if (lockTaken)
+                        this.gate.Exit(false);
                 }
             }
         }

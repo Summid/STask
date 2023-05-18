@@ -1,5 +1,5 @@
-using System;
 using System.Runtime.CompilerServices;
+using System;
 
 namespace SFramework.Threading.Tasks.Internal
 {
