@@ -31,7 +31,7 @@ public class Test : MonoBehaviour
             return node;
         }
 
-        public bool Destroy()
+        public bool Dispose()
         {
             return pool.TryPush(this);
         }

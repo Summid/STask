@@ -163,7 +163,7 @@ namespace SFramework.Threading.Tasks.Internal
 #endif
         }
 
-#region DEBUG转发
+        #region DEBUG转发
         private void Initialization() => this.RunCore();
         private void LastInitialization() => this.RunCore();
         private void EarlyUpdate() => this.RunCore();
@@ -182,7 +182,7 @@ namespace SFramework.Threading.Tasks.Internal
         private void TimeUpdate() => this.RunCore();
         //需2020.2更新版本支持
         private void LastTimeUpdate() => this.RunCore();
-#endregion
+        #endregion
 
         [System.Diagnostics.DebuggerHidden]
         private void RunCore()
@@ -214,7 +214,7 @@ namespace SFramework.Threading.Tasks.Internal
                                 continue;
                             }
                         }
-                        catch(Exception ex)
+                        catch (Exception ex)
                         {
                             this.loopItems[i] = null;
                             try
