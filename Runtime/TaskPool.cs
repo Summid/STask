@@ -78,7 +78,7 @@ namespace SFramework.Threading.Tasks
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryPop(out T result)
         {
-            //if gate equals comparand, it will be replaced by value, return original value in location1
+            //if 'gate' equals comparand, it will be replaced by value, return original value in location1
             if (Interlocked.CompareExchange(ref this.gate, 1, 0) == 0)
             {
                 T v = this.root;
