@@ -96,7 +96,7 @@ namespace SFramework.Threading.Tasks.CompilerServices
         /// <summary>
         /// 6. AwaitUnsafeOnCompleted；
         /// 状态机遇到 await 关键字后，通过 GetAwaiter() 获取Awaiter，若其 IsCompleted 为 false，调用该方法注册 Awaiter 任务结束后的回调（builder.MoveNext）
-        /// 至于调用 AwaitUnsafeOnCompleted 还是 AwaitOnCpmpleted，由 Awaiter 实现的接口决定
+        /// 至于调用 AwaitUnsafeOnCompleted 还是 AwaitOnCompleted，由 Awaiter 实现的接口决定
         /// </summary>
         /// <typeparam name="TAwaiter"></typeparam>
         /// <typeparam name="TStateMachine"></typeparam>

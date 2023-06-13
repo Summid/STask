@@ -140,19 +140,19 @@ namespace SFramework.Threading.Tasks
         }
 
         /// <summary>
-        /// 成功执行完毕
+        /// 成功执行
         /// </summary>
         /// <param name="result"></param>
         /// <returns></returns>
         public bool TrySetResult(TResult result)
         {
-            //completedCount is 0 before invoke Increment Method，只有未被使用过的才能设置 result，即只能设置一次结果（不论是 succussful/exception/canceled）
+            //if 'completedCount' is 0 before invoke Increment Method，只有未被使用过的才能设置，即只能设置一次结果（不论是 successful/exception/canceled）
             if (Interlocked.Increment(ref this.completedCount) == 1)
             {
                 this.result = result;
 
-                //if continuation is not null(has set in OnCompleted correctly), invoke continuation,
-                //if continuation is null, set continuation to s_sentinel in order to avoid invoke it
+                //if 'continuation' is not null (has set in OnCompleted correctly), invoke continuation,
+                //if 'continuation' is null, set it to 's_sentinel' in order to avoid invoke it again
                 if (this.continuation != null || Interlocked.CompareExchange(ref this.continuation, STaskCompletionSourceCoreShared.s_sentinel, null) != null)
                 {
                     this.continuation(this.continuationState);
@@ -281,8 +281,8 @@ namespace SFramework.Threading.Tasks
         /// <summary>
         /// 调度 continuation
         /// </summary>
-        /// <param name="continuation">当执行完毕后，被调用的回调</param>
-        /// <param name="state">回调的参数，真正的 STask 的 continuation（普通情况下），具体查看 STask.Awaiter.OnCompleted()</param>
+        /// <param name="continuation">执行完毕后，被调用的回调</param>
+        /// <param name="state">回调的参数，在 STask 中，它是真正的 continuation，具体可 查看 STask.Awaiter.OnCompleted()</param>
         /// <param name="token"> 执行<see cref="STask"/>构造方法时传递的值 </param>
         public void OnCompleted(Action<object> continuation,object state,short token /*, ValueTaskSourceOnCompletedFlags flags */)
         {
@@ -295,29 +295,29 @@ namespace SFramework.Threading.Tasks
             //不使用 ValueTaskSourceOnCompletedFlags 形参，不处理执行上下文或同步上下文
 
             //异步方法执行情况：
-            //PatternA: GetStatus = Pending => OnCompleted => TrhSet*** => GetResult
-            //PatternB: TrySet*** => GetStatus = !Pending => GetResult   此时 this.continuation 为
-            //PatternC: GetStatus = Pending => OnCompleted/TrySet (race condition) => GetResult
-            //C.1 win OnCompleted => TrySet invoke saved continuation
+            //PatternA: GetStatus = Pending => OnCompleted => TrySet*** => GetResult
+            //PatternB: TrySet*** => GetStatus = !Pending => GetResult   此时 this.continuation 为 s_sentinel
+            //PatternC: GetStatus = Pending => OnCompleted/TrySet*** (race condition) => GetResult
+            //C.1 win OnCompleted => TrySet*** invoke saved continuation
             //C.2 win TrySet => should invoke continuation here
 
             //重点在第三种情况
-            //若先执行的是 OnCompleted ，那么 continuation 会在这里保存下来，供 TrySet 方法执行
-            //若先执行的是 TrySet ，那么在这里执行 continuation
+            //若先执行的是 OnCompleted ，那么 continuation 会在这里保存下来，供 TrySet*** 方法执行
+            //若先执行的是 TrySet*** ，那么在这里执行 continuation
 
             object oldContinuation = this.continuation;
             if (oldContinuation == null)//还没设置 continuation
             {
                 this.continuationState = state;
                 oldContinuation = Interlocked.CompareExchange(ref this.continuation, continuation, null);
-                //oldContinuation 仍然为 null，this.continuation 为形参 continuation
-                //在 TrySet 中调用 continuation
+                //此时 oldContinuation 仍然为 null，this.continuation 为形参 continuation
+                //之后会在 TrySet 中调用 this.continuation
             }
 
             if (oldContinuation != null)
             {
-                //先执行的 TrySet，此时 oldContinuation 为 s_sentinel，调用回调
-                //若 oldContinuation != s_sentinel，表示多次 await 了同一个 STask，这是不允许的
+                //先执行的 TrySet，此时 oldContinuation 为 s_sentinel，我们需要在这里调用回调
+                //若 oldContinuation != s_sentinel，表示多次 await 了同一个 STask（多次调用了OnCompleted），这是不允许的
                 if (!ReferenceEquals(oldContinuation, STaskCompletionSourceCoreShared.s_sentinel))
                 {
                     throw new InvalidOperationException("Already continuation registered, can not await twice or get Status after await.");
