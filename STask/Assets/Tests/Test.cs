@@ -2,6 +2,7 @@ using SFramework.Threading.Tasks.Internal;
 using System.Collections;
 using System.Collections.Generic;
 using SFramework.Threading.Tasks;
+using System;
 using UnityEngine;
 
 public class Test : MonoBehaviour
@@ -9,6 +10,24 @@ public class Test : MonoBehaviour
     private void Start()
     {
     }
+
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.W))
+        {
+            this.TestWhenAll();
+        }
+    }
+
+    public async void TestWhenAll()
+    {
+        var task = STask.Delay(5000);
+        var task2 = STask.Delay(1000);
+        Debug.Log("start await all task");
+        await STask.WhenAll(task, task2);
+        Debug.Log("all tasks completed");
+    }
+    
 
     public class TestTaskPoolNode : ITaskPoolNode<TestTaskPoolNode>
     {
