@@ -284,7 +284,7 @@ namespace SFramework.Threading.Tasks
         /// <param name="continuation">执行完毕后，被调用的回调</param>
         /// <param name="state">回调的参数，在 STask 中，它是真正的 continuation，具体可 查看 STask.Awaiter.OnCompleted()</param>
         /// <param name="token"> 执行<see cref="STask"/>构造方法时传递的值 </param>
-        public void OnCompleted(Action<object> continuation,object state,short token /*, ValueTaskSourceOnCompletedFlags flags */)
+        public void OnCompleted(Action<object> continuation, object state, short token/*, ValueTaskSourceOnCompletedFlags flags */)
         {
             if (continuation == null)
             {
