@@ -21,11 +21,10 @@ public class Test : MonoBehaviour
         var task1 = this.AsyncMethod(100);
         var task2 = this.AsyncMethod(233);
         var task3 = this.AsyncMethod(777);
-        var awaitResult = await STask.WhenAll(task1, task2, task3);
-        foreach (var result in awaitResult)
-        {
-            Debug.Log($"time {result}");
-        }
+        var awaitResult = await (task1, task2, task3);
+        Debug.Log($"time {awaitResult.Item1}");
+        Debug.Log($"time {awaitResult.Item2}");
+        Debug.Log($"time {awaitResult.Item3}");
         Debug.LogWarning("Test End");
     }
 
