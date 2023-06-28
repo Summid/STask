@@ -13,6 +13,10 @@ public class Test : MonoBehaviour
         {
             this.TestWhenAll();
         }
+        if (Input.GetKeyDown(KeyCode.A))
+        {
+            this.TestWhenAny();
+        }
     }
 
     public async void TestWhenAll()
@@ -25,6 +29,17 @@ public class Test : MonoBehaviour
         Debug.Log($"time {awaitResult.Item1}");
         Debug.Log($"time {awaitResult.Item2}");
         Debug.Log($"time {awaitResult.Item3}");
+        Debug.LogWarning("Test End");
+    }
+
+    public async void TestWhenAny()
+    {
+        Debug.LogWarning("Test Start");
+        var task1 = this.AsyncMethod(888);
+        var task2 = this.AsyncMethod(233);
+        var task3 = this.AsyncMethod(777);
+        var awaitResult = await STask.WhenAny<float>(task2, task1);
+        Debug.Log($"left task win? {awaitResult.hasResultLeft}; result is {awaitResult.result}");
         Debug.LogWarning("Test End");
     }
 
