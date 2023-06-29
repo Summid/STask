@@ -7,7 +7,7 @@ using UnityEngine;
 
 public class Test : MonoBehaviour
 {
-    private void Update()
+    private async void Update()
     {
         if (Input.GetKeyDown(KeyCode.W))
         {
@@ -16,6 +16,16 @@ public class Test : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.A))
         {
             this.TestWhenAny();
+        }
+        if (Input.GetKeyDown(KeyCode.T))
+        {
+            Debug.Log("before await");
+            await this.AsyncMethod(2000);
+            
+            // ↓↓不是 async 方法，所以不会走自定义状态机
+            // await STask.Delay(2000);
+            
+            Debug.Log("after await");
         }
     }
 
