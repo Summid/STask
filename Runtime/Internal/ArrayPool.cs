@@ -109,6 +109,8 @@ namespace SFramework.Threading.Tasks.Internal
         /// <returns></returns>
         private static int CalculateSize(int size)
         {
+            // 获取大于或等于一个整数的最小2的幂
+            
             size--;             //避免 size 本身就是2的幂，计算后的结果却是 size*2 的情况
             size |= size >> 1;  //使得与最高位（含）紧邻的 2 位低位为 1
             size |= size >> 2;  //使得与最高位（含）紧邻的 4 位低位为 1
