@@ -1,5 +1,6 @@
 using SFramework.Threading.Tasks.Internal;
 using System;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using UnityEngine;
 
@@ -629,5 +630,156 @@ namespace SFramework.Threading.Tasks
             }
         }
         #endregion
+        
+        #region Yield
+        public static YieldAwaitable Yield()
+        {
+            // optimized for single continuation
+            return new YieldAwaitable(PlayerLoopTiming.Update);
+        }
+
+        public static YieldAwaitable Yield(PlayerLoopTiming timing)
+        {
+            // optimized for single continuation
+            return new YieldAwaitable(timing);
+        }
+
+        public static STask Yield(CancellationToken cancellationToken)
+        {
+            return new STask(YieldPromise.Create(PlayerLoopTiming.Update, cancellationToken, out var token), token);
+        }
+
+        public static STask Yield(PlayerLoopTiming timing, CancellationToken cancellationToken)
+        {
+            return new STask(YieldPromise.Create(timing, cancellationToken, out var token), token);
+        }
+
+        sealed class YieldPromise : ISTaskSource, IPlayerLoopItem, ITaskPoolNode<YieldPromise>
+        {
+            private static TaskPool<YieldPromise> pool;
+            private YieldPromise nextNode;
+            public ref YieldPromise NextNode => ref this.nextNode;
+
+            static YieldPromise()
+            {
+                TaskPool.RegisterSizeGetter(typeof(YieldPromise), () => pool.Size);
+            }
+
+            private CancellationToken cancellationToken;
+            private STaskCompletionSourceCore<object> core;
+            
+            private YieldPromise() { }
+
+            public static ISTaskSource Create(PlayerLoopTiming timing, CancellationToken cancellationToken, out short token)
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return AutoResetSTaskCompletionSource.CreateFromCanceled(cancellationToken, out token);
+                }
+
+                if (!pool.TryPop(out var result))
+                {
+                    result = new YieldPromise();
+                }
+
+                result.cancellationToken = cancellationToken;
+
+                PlayerLoopHelper.AddAction(timing, result);
+
+                token = result.core.Version;
+                return result;
+            }
+
+            public void GetResult(short token)
+            {
+                try
+                {
+                    this.core.GetResult(token);
+                }
+                finally
+                {
+                    this.TryReturn();
+                }
+            }
+
+            public STaskStatus GetStatus(short token)
+            {
+                return this.core.GetStatus(token);
+            }
+
+            public STaskStatus UnsafeGetStatus()
+            {
+                return this.core.UnsafeGetStatus();
+            }
+
+            public void OnCompleted(Action<object> continuation, object state, short token)
+            {
+                this.core.OnCompleted(continuation, state, token);
+            }
+
+            public bool MoveNext()
+            {
+                if (this.cancellationToken.IsCancellationRequested)
+                {
+                    this.core.TrySetCanceled(this.cancellationToken);
+                    return false;
+                }
+
+                this.core.TrySetResult(null);
+                return false;
+            }
+
+            private bool TryReturn()
+            {
+                this.core.Reset();
+                this.cancellationToken = default;
+                return pool.TryPush(this);
+            }
+        }
+        #endregion
+    }
+
+    public readonly struct YieldAwaitable
+    {
+        private readonly PlayerLoopTiming timing;
+
+        public YieldAwaitable(PlayerLoopTiming timing)
+        {
+            this.timing = timing;
+        }
+
+        public Awaiter GetAwaiter()
+        {
+            return new Awaiter(this.timing);
+        }
+
+        public STask ToSTask()
+        {
+            return STask.Yield(this.timing, CancellationToken.None);
+        }
+
+        public readonly struct Awaiter : ICriticalNotifyCompletion
+        {
+            private readonly PlayerLoopTiming timing;
+
+            public Awaiter(PlayerLoopTiming timing)
+            {
+                this.timing = timing;
+            }
+
+            public bool IsCompleted => false;
+
+            public void GetResult() { }
+
+            public void OnCompleted(Action continuation)
+            {
+                PlayerLoopHelper.AddContinuation(this.timing, continuation);
+            }
+
+            public void UnsafeOnCompleted(Action continuation)
+            {
+                PlayerLoopHelper.AddContinuation(this.timing, continuation);
+            }
+        }
     }
 }
