@@ -129,6 +129,141 @@ namespace SFramework.Threading.Tasks
         }
         #endregion
 
+        #region Delay Frame
+        public static STask DelayFrame(int delayFrameCount, PlayerLoopTiming delayTiming = PlayerLoopTiming.Update, CancellationToken cancellationToken = default)
+        {
+            if (delayFrameCount < 0)
+            {
+                throw new ArgumentOutOfRangeException("Delay does not allow minus delayFrameCount. delayFrameCount:" + delayFrameCount);
+            }
+
+            return new STask(DelayFramePromise.Create(delayFrameCount, delayTiming, cancellationToken, out var token), token);
+        }
+
+        sealed class DelayFramePromise : ISTaskSource, IPlayerLoopItem, ITaskPoolNode<DelayFramePromise>
+        {
+            private static TaskPool<DelayFramePromise> pool;
+            private DelayFramePromise nextNode;
+            public ref DelayFramePromise NextNode => ref this.nextNode;
+
+            static DelayFramePromise()
+            {
+                TaskPool.RegisterSizeGetter(typeof(DelayFramePromise), () => pool.Size);
+            }
+
+            private int initialFrame;
+            private int delayFrameCount;
+            private CancellationToken cancellationToken;
+
+            private int currentFrameCount;
+            private STaskCompletionSourceCore<AsyncUnit> core;
+
+            private DelayFramePromise() { }
+
+            public static ISTaskSource Create(int delayFrameCount, PlayerLoopTiming timing, CancellationToken cancellationToken, out short token)
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return AutoResetSTaskCompletionSource.CreateFromCanceled(cancellationToken, out token);
+                }
+
+                if (!pool.TryPop(out var result))
+                {
+                    result = new DelayFramePromise();
+                }
+
+                result.delayFrameCount = delayFrameCount;
+                result.cancellationToken = cancellationToken;
+                result.initialFrame = PlayerLoopHelper.IsMainThread ? Time.frameCount : -1;
+
+                PlayerLoopHelper.AddAction(timing, result);
+
+                token = result.core.Version;
+                return result;
+            }
+
+            public void GetResult(short token)
+            {
+                try
+                {
+                    this.core.GetResult(token);
+                }
+                finally
+                {
+                    this.TryReturn();
+                }
+            }
+
+            public STaskStatus GetStatus(short token)
+            {
+                return this.core.GetStatus(token);
+            }
+
+            public STaskStatus UnsafeGetStatus()
+            {
+                return this.core.UnsafeGetStatus();
+            }
+
+            public void OnCompleted(Action<object> continuation, object state, short token)
+            {
+                this.core.OnCompleted(continuation, state, token);
+            }
+
+            public bool MoveNext()
+            {
+                if (this.cancellationToken.IsCancellationRequested)
+                {
+                    this.core.TrySetCanceled(this.cancellationToken);
+                    return false;
+                }
+
+                if (this.currentFrameCount == 0)
+                {
+                    if (this.delayFrameCount == 0) // same as Yield
+                    {
+                        this.core.TrySetResult(AsyncUnit.Default);
+                        return false;
+                    }
+
+                    // skip in initial frame
+                    if (this.initialFrame == Time.frameCount)
+                    {
+#if UNITY_EDITOR
+                        if (PlayerLoopHelper.IsMainThread && !UnityEditor.EditorApplication.isPlaying)
+                        {
+                            //nothing happened
+                        }
+                        else
+                        {
+                            return true;
+                        }
+#else
+                        reutrn true;
+#endif
+                    }
+                }
+
+                if (++this.currentFrameCount >= this.delayFrameCount)
+                {
+                    this.core.TrySetResult(AsyncUnit.Default);
+                    return false;
+                }
+
+                return true;
+            }
+
+            private bool TryReturn()
+            {
+                this.core.Reset();
+                this.currentFrameCount = default;
+                this.delayFrameCount = default;
+                this.cancellationToken = default;
+                return pool.TryPush(this);
+            }
+        }
+
+        #endregion
+
         #region Delay Time
         public static STask Delay(int millisecondsDelay, bool ignoreTimeScale = false, PlayerLoopTiming delayTiming = PlayerLoopTiming.Update, CancellationToken cancellationToken = default(CancellationToken))
         {

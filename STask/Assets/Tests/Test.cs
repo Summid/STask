@@ -27,6 +27,10 @@ public class Test : MonoBehaviour
             
             Debug.Log("after await");
         }
+        if (Input.GetKeyDown(KeyCode.F))
+        {
+            _ = this.WaitForFrame();
+        }
     }
 
     public async void TestWhenAll()
@@ -57,5 +61,13 @@ public class Test : MonoBehaviour
     {
         await STask.Delay(milliseconds);
         return Time.realtimeSinceStartup;
+    }
+
+    public async STaskVoid WaitForFrame()
+    {
+        int frameCount = 30;
+        Debug.Log($"current frame count:{Time.frameCount}, wait frame count:{frameCount}");
+        await STask.DelayFrame(frameCount);
+        Debug.Log($"current frame count:{Time.frameCount}");
     }
 }
