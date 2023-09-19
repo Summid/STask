@@ -768,6 +768,115 @@ namespace SFramework.Threading.Tasks
             }
         }
         #endregion
+        
+        #region WaitForEndOfFrame
+        public static STask WaitForEndOfFrame(MonoBehaviour coroutineRunner, CancellationToken cancellationToken = default)
+        {
+            return new STask(WaitForEndOfFramePromise.Create(coroutineRunner, cancellationToken, out var token), token);
+        }
+        
+        private sealed class WaitForEndOfFramePromise : ISTaskSource, ITaskPoolNode<WaitForEndOfFramePromise>, System.Collections.IEnumerator
+        {
+            private static TaskPool<WaitForEndOfFramePromise> pool;
+            private WaitForEndOfFramePromise nextNode;
+            public ref WaitForEndOfFramePromise NextNode => ref this.nextNode;
+
+            static WaitForEndOfFramePromise()
+            {
+                TaskPool.RegisterSizeGetter(typeof(WaitForEndOfFramePromise), () => pool.Size);
+            }
+
+            private CancellationToken cancellationToken;
+            private STaskCompletionSourceCore<object> core;
+            
+            private WaitForEndOfFramePromise() { }
+
+            public static ISTaskSource Create(MonoBehaviour coroutineRunner, CancellationToken cancellationToken, out short token)
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return AutoResetSTaskCompletionSource.CreateFromCanceled(cancellationToken, out token);
+                }
+
+                if (!pool.TryPop(out var result))
+                {
+                    result = new WaitForEndOfFramePromise();
+                }
+
+                result.cancellationToken = cancellationToken;
+
+                coroutineRunner.StartCoroutine(result);
+
+                token = result.core.Version;
+                return result;
+            }
+
+            public void GetResult(short token)
+            {
+                try
+                {
+                    this.core.GetResult(token);
+                }
+                finally
+                {
+                    this.TryReturn();
+                }
+            }
+
+            public STaskStatus GetStatus(short token)
+            {
+                return this.core.GetStatus(token);
+            }
+
+            public STaskStatus UnsafeGetStatus()
+            {
+                return this.core.UnsafeGetStatus();
+            }
+
+            public void OnCompleted(Action<object> continuation, object state, short token)
+            {
+                this.core.OnCompleted(continuation, state, token);
+            }
+
+            private bool TryReturn()
+            {
+                this.core.Reset();
+                this.Reset(); // Reset Enumerator
+                this.cancellationToken = default;
+                return pool.TryPush(this);
+            }
+            
+            // Coroutine Runner implementation
+
+            private static readonly WaitForEndOfFrame waitForEndOfFrameYieldInstruction = new WaitForEndOfFrame();
+            private bool isFirst = true;
+
+            object System.Collections.IEnumerator.Current => waitForEndOfFrameYieldInstruction;
+            
+            bool System.Collections.IEnumerator.MoveNext()
+            {
+                if (this.isFirst)
+                {
+                    this.isFirst = false;
+                    return true; // start WaitForEndOfFrame
+                }
+
+                if (this.cancellationToken.IsCancellationRequested)
+                {
+                    this.core.TrySetCanceled(this.cancellationToken);
+                    return false;
+                }
+
+                this.core.TrySetResult(null);
+                return false;
+            }
+            
+            public void Reset()
+            {
+                this.isFirst = true;
+            }
+        }
+        #endregion
     }
 
     public readonly struct YieldAwaitable
