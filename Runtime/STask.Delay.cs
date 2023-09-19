@@ -317,6 +317,16 @@ namespace SFramework.Threading.Tasks
             }
         }
 
+        public static STask WaitForSeconds(float duration, bool ignoreTimeScale = false, PlayerLoopTiming delayTiming = PlayerLoopTiming.Update, CancellationToken cancellationToken = default)
+        {
+            return Delay(Mathf.RoundToInt(1000 * duration), ignoreTimeScale, delayTiming, cancellationToken);
+        }
+
+        public static STask WaitForSeconds(int duration, bool ignoreTimeScale = false, PlayerLoopTiming delayTiming = PlayerLoopTiming.Update, CancellationToken cancellationToken = default)
+        {
+            return Delay(1000 * duration, ignoreTimeScale, delayTiming, cancellationToken);
+        }
+
         private sealed class DelayPromise : ISTaskSource, IPlayerLoopItem, ITaskPoolNode<DelayPromise>
         {
             private static TaskPool<DelayPromise> pool;
@@ -654,7 +664,28 @@ namespace SFramework.Threading.Tasks
             return new STask(YieldPromise.Create(timing, cancellationToken, out var token), token);
         }
 
-        sealed class YieldPromise : ISTaskSource, IPlayerLoopItem, ITaskPoolNode<YieldPromise>
+        /// <summary>
+        /// Same as STask.Yield(PlayerLoopTiming.LastFixedUpdate)
+        /// </summary>
+        /// <returns></returns>
+        public static YieldAwaitable WaitForFixedUpdate()
+        {
+            // use LastFixedUpdate instead of FixedUpdate
+            // https://github.com/Cysharp/UniTask/issues/377
+            return STask.Yield(PlayerLoopTiming.LastFixedUpdate);
+        }
+
+        /// <summary>
+        /// Same as UniTask.Yield(PlayerLoopTiming.LastFixedUpdate, cancellationToken)
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public static STask WaitForFixedUpdate(CancellationToken cancellationToken)
+        {
+            return STask.Yield(PlayerLoopTiming.LastFixedUpdate, cancellationToken);
+        }
+
+        private sealed class YieldPromise : ISTaskSource, IPlayerLoopItem, ITaskPoolNode<YieldPromise>
         {
             private static TaskPool<YieldPromise> pool;
             private YieldPromise nextNode;
