@@ -12,7 +12,7 @@ namespace SFramework.Threading.Tasks.Internal
                 ThrowArgumentNullExceptionCore(paramName);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.NoInlining)]
         private static void ThrowArgumentNullExceptionCore(string paramName)
         {
             throw new ArgumentNullException(paramName);
@@ -36,19 +36,19 @@ namespace SFramework.Threading.Tasks.Internal
             return new InvalidOperationException("Source sequence contains more than one element.");
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void ThrowArgumentException<T>(string message)
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void ThrowArgumentException(string message)
         {
             throw new ArgumentException(message);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public static void ThrowNotYetCompleted()
         {
             throw new InvalidOperationException("Not yet completed.");
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public static T ThrowNotYetCompleted<T>()
         {
             throw new InvalidOperationException("Not yet Completed.");
@@ -66,13 +66,13 @@ namespace SFramework.Threading.Tasks.Internal
                 ThrowInvalidOperationExceptionCore("continuation is already registered.");
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.NoInlining)]
         private static void ThrowInvalidOperationExceptionCore(string message)
         {
             throw new InvalidOperationException(message);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public static void ThrowOperationCanceledException()
         {
             throw new OperationCanceledException();
