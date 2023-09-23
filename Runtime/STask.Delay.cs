@@ -775,6 +775,13 @@ namespace SFramework.Threading.Tasks
             return new STask(WaitForEndOfFramePromise.Create(coroutineRunner, cancellationToken, out var token), token);
         }
         
+        #if UNITY_2023_1_OR_NEWER
+        public static async STask WaitForEndOfFrame(CancellationToken cancellationToken = default)
+        {
+            await Awaitable.EndOfFrameAsync(cancellationToken);
+        }
+        #endif
+        
         private sealed class WaitForEndOfFramePromise : ISTaskSource, ITaskPoolNode<WaitForEndOfFramePromise>, System.Collections.IEnumerator
         {
             private static TaskPool<WaitForEndOfFramePromise> pool;
