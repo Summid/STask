@@ -352,6 +352,7 @@ namespace SFramework.Threading.Tasks
         }
 
         private STaskCompletionSourceCore<AsyncUnit> core;
+        private short version;
 
         AutoResetSTaskCompletionSource()
         {
@@ -364,6 +365,7 @@ namespace SFramework.Threading.Tasks
             {
                 result = new AutoResetSTaskCompletionSource();
             }
+            result.version = result.core.Version;
             return result;
         }
 
@@ -406,19 +408,19 @@ namespace SFramework.Threading.Tasks
         [DebuggerHidden]
         public bool TrySetResult()
         {
-            return this.core.TrySetResult(AsyncUnit.Default);
+            return this.version == this.core.Version && this.core.TrySetResult(AsyncUnit.Default);
         }
 
         [DebuggerHidden]
         public bool TrySetCanceled(CancellationToken cancellationToken = default)
         {
-            return this.core.TrySetCanceled(cancellationToken);
+            return this.version == this.core.Version && this.core.TrySetCanceled(cancellationToken);
         }
 
         [DebuggerHidden]
         public bool TrySetException(Exception exception)
         {
-            return this.core.TrySetException(exception);
+            return this.version == this.core.Version && this.core.TrySetException(exception);
         }
 
         [DebuggerHidden]
@@ -475,8 +477,9 @@ namespace SFramework.Threading.Tasks
             TaskPool.RegisterSizeGetter(typeof(AutoResetSTaskCompletionSource<T>), () => pool.Size);
         }
 
-        STaskCompletionSourceCore<T> core;
-
+        private STaskCompletionSourceCore<T> core;
+        private short version;
+        
         AutoResetSTaskCompletionSource()
         {
         }
@@ -488,6 +491,7 @@ namespace SFramework.Threading.Tasks
             {
                 result = new AutoResetSTaskCompletionSource<T>();
             }
+            result.version = result.core.Version;
             return result;
         }
 
@@ -530,19 +534,19 @@ namespace SFramework.Threading.Tasks
         [DebuggerHidden]
         public bool TrySetResult(T result)
         {
-            return this.core.TrySetResult(result);
+            return this.version == this.core.Version && this.core.TrySetResult(result);
         }
 
         [DebuggerHidden]
         public bool TrySetCanceled(CancellationToken cancellationToken = default)
         {
-            return this.core.TrySetCanceled(cancellationToken);
+            return this.version == this.core.Version && this.core.TrySetCanceled(cancellationToken);
         }
 
         [DebuggerHidden]
         public bool TrySetException(Exception exception)
         {
-            return this.core.TrySetException(exception);
+            return this.version == this.core.Version && this.core.TrySetException(exception);
         }
 
         [DebuggerHidden]
