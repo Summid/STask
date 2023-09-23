@@ -156,8 +156,8 @@ namespace SFramework.Threading.Tasks
                 if (this.continuation != null || Interlocked.CompareExchange(ref this.continuation, STaskCompletionSourceCoreShared.s_sentinel, null) != null)
                 {
                     this.continuation(this.continuationState);
-                    return true;
                 }
+                return true;
             }
 
             return false;
@@ -185,8 +185,8 @@ namespace SFramework.Threading.Tasks
                 if (this.continuation != null || Interlocked.CompareExchange(ref this.continuation, STaskCompletionSourceCoreShared.s_sentinel, null) != null)
                 {
                     this.continuation(this.continuationState);
-                    return true;
                 }
+                return true;
             }
 
             return false;
@@ -207,8 +207,8 @@ namespace SFramework.Threading.Tasks
                 if (this.continuation != null || Interlocked.CompareExchange(ref this.continuation, STaskCompletionSourceCoreShared.s_sentinel, null) != null)
                 {
                     this.continuation(this.continuationState);
-                    return true;
                 }
+                return true;
             }
 
             return false;
