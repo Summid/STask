@@ -203,7 +203,11 @@ namespace SFramework.Threading.Tasks
                 .ToArray();
         }
 
+#if UNITY_2020_1_OR_NEWER
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]
+#else
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+#endif
         private static void Init()
         {
             //捕获 unity 的同步上下文
