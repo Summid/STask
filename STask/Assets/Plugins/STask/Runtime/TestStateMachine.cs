@@ -95,7 +95,7 @@ namespace SFramework.Threading.Tasks
 //通过ildasm工具可以看到il代码先将 myStateMachine 拷贝了一份，再执行的方法
 
 //为何要先拷贝再调用？
-//由于 awaiter.UnsafeOnComplted 参数为 MyStateMachine 中的方法，因此需要先将 MyStateMachine 中的上下文都“捕获”起来（闭包）
+//由于 awaiter.UnsafeOnCompleted 参数为 MyStateMachine 中的方法，因此需要先将 MyStateMachine 中的上下文都“捕获”起来（闭包）
 //若MyStateMachine为class则不存在问题，很迷惑
 
 //由于 MyAwaiter 为 struct 类型，在拷贝 MyStateMachine 时也就 new 了一个新的 MyAwaiter
