@@ -1,0 +1,18 @@
+{
+    "name": "STask.Editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:545c05b61d3e3064c83ad45b22076e4d"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
