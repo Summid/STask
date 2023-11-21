@@ -129,10 +129,12 @@ namespace SFramework.Threading.Tasks
         private static SynchronizationContext unitySynchronizationContext;
         private static ContinuationQueue[] yielders;
         private static PlayerLoopRunner[] runners;
+        private static string applicationDataPath;
 
         public static int MainThreadId => mainThreadId;
         public static bool IsMainThread => Thread.CurrentThread.ManagedThreadId == mainThreadId;
         public static SynchronizationContext UnitySynchronizationContext => unitySynchronizationContext;
+        public static string ApplicationDataPath => applicationDataPath;
 
         private static PlayerLoopSystem[] InsertRunner(PlayerLoopSystem loopSystem,bool injectOnFirst,
             Type loopRunnerYieldType,ContinuationQueue cq,
@@ -213,6 +215,11 @@ namespace SFramework.Threading.Tasks
             //捕获 unity 的同步上下文
             unitySynchronizationContext = SynchronizationContext.Current;
             mainThreadId = Thread.CurrentThread.ManagedThreadId;
+            try
+            {
+                applicationDataPath = Application.dataPath;
+            }
+            catch { }
 
 #if UNITY_EDITOR
             //解决编辑器关闭域重载的问题，需要 2019.3 以上的版本
