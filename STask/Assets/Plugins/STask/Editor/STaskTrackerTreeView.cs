@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SFramework.Threading.Tasks.Internal;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -124,7 +125,10 @@ namespace SFramework.Threading.Tasks.Editor
 
             var children = new List<TreeViewItem>();
             
-            //todo TaskTracker foreachActiveTask
+            TaskTracker.ForEachActiveTask((trackingId, awaiterType, status, created, stackTrace) =>
+            {
+                children.Add(new STaskTrackerViewItem(trackingId) { TaskType = awaiterType, Status = status.ToString(), Elapsed = (DateTime.UtcNow - created).TotalSeconds.ToString("00.00"), Position = stackTrace });
+            });
 
             this.CurrentBindingItems = children;
             root.children = this.CurrentBindingItems as List<TreeViewItem>;

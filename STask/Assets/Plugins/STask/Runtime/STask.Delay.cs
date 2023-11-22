@@ -676,7 +676,7 @@ namespace SFramework.Threading.Tasks
         }
 
         /// <summary>
-        /// Same as UniTask.Yield(PlayerLoopTiming.LastFixedUpdate, cancellationToken)
+        /// Same as STask.Yield(PlayerLoopTiming.LastFixedUpdate, cancellationToken)
         /// </summary>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>

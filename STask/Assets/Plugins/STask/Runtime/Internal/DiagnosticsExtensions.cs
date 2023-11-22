@@ -17,7 +17,7 @@ namespace SFramework.Threading.Tasks.Internal
     {
         private static bool displayFilenames = true;
 
-        private static readonly Regex typeBeautifyRegex = new Regex("'.+$", RegexOptions.Compiled);
+        private static readonly Regex typeBeautifyRegex = new Regex("`.+$", RegexOptions.Compiled);
 
         private static readonly Dictionary<Type, string> builtInTypeNames = new Dictionary<Type, string>
         {
@@ -214,7 +214,7 @@ namespace SFramework.Threading.Tasks.Internal
             {
                 return true;
             }
-            else if (declareType.StartsWith("SFramework.Threading.Tasks.UniTaskCompletionSourceCore"))
+            else if (declareType.StartsWith("SFramework.Threading.Tasks.STaskCompletionSourceCore"))
             {
                 return true;
             }
