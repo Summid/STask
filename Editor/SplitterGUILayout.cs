@@ -31,12 +31,12 @@ namespace SFramework.Threading.Tasks.Editor
         private static Lazy<MethodInfo> beginVerticalSplit = new Lazy<MethodInfo>(() =>
         {
             Type type = splitterGUILayoutType.Value;
-            return type.GetMethod("BegingVerticalSplit", flags, null, new Type[] { splitterStateType.Value, typeof(GUILayoutOption[]) }, null);
+            return type.GetMethod("BeginVerticalSplit", flags, null, new Type[] { splitterStateType.Value, typeof(GUILayoutOption[]) }, null);
         });
 
         private static Lazy<MethodInfo> endVerticalSplit = new Lazy<MethodInfo>(() =>
         {
-            Type type = splitterStateType.Value;
+            Type type = splitterGUILayoutType.Value;
             return type.GetMethod("EndVerticalSplit", flags, null, Type.EmptyTypes, null);
         });
 
