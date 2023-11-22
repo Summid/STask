@@ -71,6 +71,8 @@ namespace SFramework.Threading.Tasks
                 result.frameCount = PlayerLoopHelper.IsMainThread ? Time.frameCount : -1;
                 result.cancellationToken = cancellationToken;
 
+                TaskTracker.TrackActiveTask(result, 3);
+
                 PlayerLoopHelper.AddAction(timing, result);
 
                 token = result.core.Version;
@@ -85,7 +87,7 @@ namespace SFramework.Threading.Tasks
                 }
                 finally
                 {
-                    this.TryRetuen();
+                    this.TryReturn();
                 }
             }
 
@@ -121,8 +123,9 @@ namespace SFramework.Threading.Tasks
                 return false;
             }
 
-            private bool TryRetuen()
+            private bool TryReturn()
             {
+                TaskTracker.RemoveTracking(this);
                 this.core.Reset();
                 this.cancellationToken = default;
                 return pool.TryPush(this);
@@ -176,6 +179,8 @@ namespace SFramework.Threading.Tasks
                 result.delayFrameCount = delayFrameCount;
                 result.cancellationToken = cancellationToken;
                 result.initialFrame = PlayerLoopHelper.IsMainThread ? Time.frameCount : -1;
+
+                TaskTracker.TrackActiveTask(result, 3);
 
                 PlayerLoopHelper.AddAction(timing, result);
 
@@ -255,6 +260,7 @@ namespace SFramework.Threading.Tasks
 
             private bool TryReturn()
             {
+                TaskTracker.RemoveTracking(this);
                 this.core.Reset();
                 this.currentFrameCount = default;
                 this.delayFrameCount = default;
@@ -364,6 +370,8 @@ namespace SFramework.Threading.Tasks
                 result.cancellationToken = cancellationToken;
                 result.initialFrame = PlayerLoopHelper.IsMainThread ? Time.frameCount : -1;
 
+                TaskTracker.TrackActiveTask(result, 3);
+
                 PlayerLoopHelper.AddAction(timing, result);
 
                 token = result.core.Version;
@@ -425,6 +433,7 @@ namespace SFramework.Threading.Tasks
 
             private bool TryReturn()
             {
+                TaskTracker.RemoveTracking(this);
                 this.core.Reset();
                 this.delayTimeSpan = default;
                 this.elapsed = default;
@@ -470,6 +479,7 @@ namespace SFramework.Threading.Tasks
                 result.initialFrame = PlayerLoopHelper.IsMainThread ? Time.frameCount : -1;
                 result.cancellationToken = cancellationToken;
 
+                TaskTracker.TrackActiveTask(result, 3);
 
                 PlayerLoopHelper.AddAction(timing, result);
 
@@ -532,6 +542,7 @@ namespace SFramework.Threading.Tasks
 
             private bool TryReturn()
             {
+                TaskTracker.RemoveTracking(this);
                 this.core.Reset();
                 this.delayFrameTimeSpan = default;
                 this.elapsed = default;
@@ -575,6 +586,8 @@ namespace SFramework.Threading.Tasks
                 result.delayTimeSpanTicks = delayTimeSpan.Ticks;
                 result.cancellationToken = cancellationToken;
 
+                TaskTracker.TrackActiveTask(result, 3);
+                
                 PlayerLoopHelper.AddAction(timing, result);
 
                 token = result.core.Version;
@@ -589,7 +602,7 @@ namespace SFramework.Threading.Tasks
                 }
                 finally
                 {
-                    this.TryRetuen();
+                    this.TryReturn();
                 }
             }
 
@@ -631,8 +644,9 @@ namespace SFramework.Threading.Tasks
                 return true;
             }
 
-            private bool TryRetuen()
+            private bool TryReturn()
             {
+                TaskTracker.RemoveTracking(this);
                 this.core.Reset();
                 this.stopwatch = default;
                 this.cancellationToken = default;
@@ -715,6 +729,8 @@ namespace SFramework.Threading.Tasks
 
                 result.cancellationToken = cancellationToken;
 
+                TaskTracker.TrackActiveTask(result, 3);
+
                 PlayerLoopHelper.AddAction(timing, result);
 
                 token = result.core.Version;
@@ -762,6 +778,7 @@ namespace SFramework.Threading.Tasks
 
             private bool TryReturn()
             {
+                TaskTracker.RemoveTracking(this);
                 this.core.Reset();
                 this.cancellationToken = default;
                 return pool.TryPush(this);
@@ -812,6 +829,8 @@ namespace SFramework.Threading.Tasks
 
                 result.cancellationToken = cancellationToken;
 
+                TaskTracker.TrackActiveTask(result, 3);
+
                 coroutineRunner.StartCoroutine(result);
 
                 token = result.core.Version;
@@ -847,6 +866,7 @@ namespace SFramework.Threading.Tasks
 
             private bool TryReturn()
             {
+                TaskTracker.RemoveTracking(this);
                 this.core.Reset();
                 this.Reset(); // Reset Enumerator
                 this.cancellationToken = default;

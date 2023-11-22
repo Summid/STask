@@ -28,6 +28,7 @@ namespace SFramework.Threading.Tasks
 
             public WhenAnyLRPromise(STask<T> leftTask, STask<T> rightTask)
             {
+                TaskTracker.TrackActiveTask(this, 3);
                 {
                     STask<T>.Awaiter awaiter;
                     try
@@ -132,6 +133,8 @@ namespace SFramework.Threading.Tasks
             }
             public (bool, T) GetResult(short token)
             {
+                TaskTracker.RemoveTracking(this);
+                GC.SuppressFinalize(this);
                 return this.core.GetResult(token);
             }
             void ISTaskSource.GetResult(short token)
@@ -171,6 +174,8 @@ namespace SFramework.Threading.Tasks
                 {
                     throw new ArgumentException("The tasks argument contains no tasks.");
                 }
+
+                TaskTracker.TrackActiveTask(this, 3);
 
                 for (int i = 0; i < tasksLength; ++i)
                 {
@@ -231,6 +236,7 @@ namespace SFramework.Threading.Tasks
             }
             public (int, T) GetResult(short token)
             {
+                TaskTracker.RemoveTracking(this);
                 GC.SuppressFinalize(this);
                 return this.core.GetResult(token);
             }
@@ -272,6 +278,8 @@ namespace SFramework.Threading.Tasks
                 {
                     throw new ArgumentException("The tasks argument contains no tasks.");
                 }
+
+                TaskTracker.TrackActiveTask(this, 3);
 
                 for (int i = 0; i < tasksLength; ++i)
                 {
@@ -331,6 +339,7 @@ namespace SFramework.Threading.Tasks
             }
             public int GetResult(short token)
             {
+                TaskTracker.RemoveTracking(this);
                 GC.SuppressFinalize(this);
                 return this.core.GetResult(token);
             }

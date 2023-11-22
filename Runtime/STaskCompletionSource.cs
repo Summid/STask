@@ -1,3 +1,4 @@
+using SFramework.Threading.Tasks.Internal;
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -365,6 +366,7 @@ namespace SFramework.Threading.Tasks
             {
                 result = new AutoResetSTaskCompletionSource();
             }
+            TaskTracker.TrackActiveTask(result, 2);
             result.version = result.core.Version;
             return result;
         }
@@ -458,6 +460,7 @@ namespace SFramework.Threading.Tasks
         [DebuggerHidden]
         bool TryReturn()
         {
+            TaskTracker.RemoveTracking(this);
             this.core.Reset();
             return pool.TryPush(this);
         }
@@ -492,6 +495,7 @@ namespace SFramework.Threading.Tasks
                 result = new AutoResetSTaskCompletionSource<T>();
             }
             result.version = result.core.Version;
+            TaskTracker.TrackActiveTask(result, 2);
             return result;
         }
 
@@ -589,6 +593,7 @@ namespace SFramework.Threading.Tasks
         [DebuggerHidden]
         bool TryReturn()
         {
+            TaskTracker.RemoveTracking(this);
             this.core.Reset();
             return pool.TryPush(this);
         }

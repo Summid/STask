@@ -1,7 +1,7 @@
 using SFramework.Threading.Tasks.Internal;
 using System;
-using System.Collections;
-using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
 using System.Threading;
 
 namespace SFramework.Threading.Tasks
@@ -20,6 +20,8 @@ namespace SFramework.Threading.Tasks
 
             public WhenAnyPromise(STask<T1> task1, STask<T2> task2)
             {
+                TaskTracker.TrackActiveTask(this, 3);
+
                 this.completedCount = 0;
                 {
                     var awaiter = task1.GetAwaiter();
@@ -100,6 +102,7 @@ namespace SFramework.Threading.Tasks
 
             public (int, T1 result1, T2 result2) GetResult(short token)
             {
+                TaskTracker.RemoveTracking(this);
                 GC.SuppressFinalize(this);
                 return core.GetResult(token);
             }
@@ -137,6 +140,8 @@ namespace SFramework.Threading.Tasks
 
             public WhenAnyPromise(STask<T1> task1, STask<T2> task2, STask<T3> task3)
             {
+                TaskTracker.TrackActiveTask(this, 3);
+
                 this.completedCount = 0;
                 {
                     var awaiter = task1.GetAwaiter();
@@ -254,6 +259,7 @@ namespace SFramework.Threading.Tasks
 
             public (int, T1 result1, T2 result2, T3 result3) GetResult(short token)
             {
+                TaskTracker.RemoveTracking(this);
                 GC.SuppressFinalize(this);
                 return core.GetResult(token);
             }
@@ -291,6 +297,8 @@ namespace SFramework.Threading.Tasks
 
             public WhenAnyPromise(STask<T1> task1, STask<T2> task2, STask<T3> task3, STask<T4> task4)
             {
+                TaskTracker.TrackActiveTask(this, 3);
+
                 this.completedCount = 0;
                 {
                     var awaiter = task1.GetAwaiter();
@@ -445,6 +453,7 @@ namespace SFramework.Threading.Tasks
 
             public (int, T1 result1, T2 result2, T3 result3, T4 result4) GetResult(short token)
             {
+                TaskTracker.RemoveTracking(this);
                 GC.SuppressFinalize(this);
                 return core.GetResult(token);
             }
@@ -482,6 +491,8 @@ namespace SFramework.Threading.Tasks
 
             public WhenAnyPromise(STask<T1> task1, STask<T2> task2, STask<T3> task3, STask<T4> task4, STask<T5> task5)
             {
+                TaskTracker.TrackActiveTask(this, 3);
+
                 this.completedCount = 0;
                 {
                     var awaiter = task1.GetAwaiter();
@@ -673,6 +684,7 @@ namespace SFramework.Threading.Tasks
 
             public (int, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5) GetResult(short token)
             {
+                TaskTracker.RemoveTracking(this);
                 GC.SuppressFinalize(this);
                 return core.GetResult(token);
             }
@@ -710,6 +722,8 @@ namespace SFramework.Threading.Tasks
 
             public WhenAnyPromise(STask<T1> task1, STask<T2> task2, STask<T3> task3, STask<T4> task4, STask<T5> task5, STask<T6> task6)
             {
+                TaskTracker.TrackActiveTask(this, 3);
+
                 this.completedCount = 0;
                 {
                     var awaiter = task1.GetAwaiter();
@@ -938,6 +952,7 @@ namespace SFramework.Threading.Tasks
 
             public (int, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6) GetResult(short token)
             {
+                TaskTracker.RemoveTracking(this);
                 GC.SuppressFinalize(this);
                 return core.GetResult(token);
             }
@@ -963,8 +978,7 @@ namespace SFramework.Threading.Tasks
             }
         }
 
-        public static STask<(int winArgumentIndex, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7)> WhenAny<T1, T2, T3, T4, T5, T6, T7>(STask<T1> task1, STask<T2> task2, STask<T3> task3, STask<T4> task4, STask<T5> task5,
-            STask<T6> task6, STask<T7> task7)
+        public static STask<(int winArgumentIndex, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7)> WhenAny<T1, T2, T3, T4, T5, T6, T7>(STask<T1> task1, STask<T2> task2, STask<T3> task3, STask<T4> task4, STask<T5> task5, STask<T6> task6, STask<T7> task7)
         {
             return new STask<(int winArgumentIndex, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7)>(new WhenAnyPromise<T1, T2, T3, T4, T5, T6, T7>(task1, task2, task3, task4, task5, task6, task7), 0);
         }
@@ -976,6 +990,8 @@ namespace SFramework.Threading.Tasks
 
             public WhenAnyPromise(STask<T1> task1, STask<T2> task2, STask<T3> task3, STask<T4> task4, STask<T5> task5, STask<T6> task6, STask<T7> task7)
             {
+                TaskTracker.TrackActiveTask(this, 3);
+
                 this.completedCount = 0;
                 {
                     var awaiter = task1.GetAwaiter();
@@ -1241,6 +1257,7 @@ namespace SFramework.Threading.Tasks
 
             public (int, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7) GetResult(short token)
             {
+                TaskTracker.RemoveTracking(this);
                 GC.SuppressFinalize(this);
                 return core.GetResult(token);
             }
@@ -1266,8 +1283,7 @@ namespace SFramework.Threading.Tasks
             }
         }
 
-        public static STask<(int winArgumentIndex, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8)> WhenAny<T1, T2, T3, T4, T5, T6, T7, T8>(STask<T1> task1, STask<T2> task2, STask<T3> task3, STask<T4> task4,
-            STask<T5> task5, STask<T6> task6, STask<T7> task7, STask<T8> task8)
+        public static STask<(int winArgumentIndex, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8)> WhenAny<T1, T2, T3, T4, T5, T6, T7, T8>(STask<T1> task1, STask<T2> task2, STask<T3> task3, STask<T4> task4, STask<T5> task5, STask<T6> task6, STask<T7> task7, STask<T8> task8)
         {
             return new STask<(int winArgumentIndex, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8)>(new WhenAnyPromise<T1, T2, T3, T4, T5, T6, T7, T8>(task1, task2, task3, task4, task5, task6, task7, task8), 0);
         }
@@ -1279,6 +1295,8 @@ namespace SFramework.Threading.Tasks
 
             public WhenAnyPromise(STask<T1> task1, STask<T2> task2, STask<T3> task3, STask<T4> task4, STask<T5> task5, STask<T6> task6, STask<T7> task7, STask<T8> task8)
             {
+                TaskTracker.TrackActiveTask(this, 3);
+
                 this.completedCount = 0;
                 {
                     var awaiter = task1.GetAwaiter();
@@ -1581,6 +1599,7 @@ namespace SFramework.Threading.Tasks
 
             public (int, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8) GetResult(short token)
             {
+                TaskTracker.RemoveTracking(this);
                 GC.SuppressFinalize(this);
                 return core.GetResult(token);
             }
@@ -1606,11 +1625,9 @@ namespace SFramework.Threading.Tasks
             }
         }
 
-        public static STask<(int winArgumentIndex, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9)> WhenAny<T1, T2, T3, T4, T5, T6, T7, T8, T9>(STask<T1> task1, STask<T2> task2, STask<T3> task3,
-            STask<T4> task4, STask<T5> task5, STask<T6> task6, STask<T7> task7, STask<T8> task8, STask<T9> task9)
+        public static STask<(int winArgumentIndex, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9)> WhenAny<T1, T2, T3, T4, T5, T6, T7, T8, T9>(STask<T1> task1, STask<T2> task2, STask<T3> task3, STask<T4> task4, STask<T5> task5, STask<T6> task6, STask<T7> task7, STask<T8> task8, STask<T9> task9)
         {
-            return new STask<(int winArgumentIndex, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9)>(
-                new WhenAnyPromise<T1, T2, T3, T4, T5, T6, T7, T8, T9>(task1, task2, task3, task4, task5, task6, task7, task8, task9), 0);
+            return new STask<(int winArgumentIndex, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9)>(new WhenAnyPromise<T1, T2, T3, T4, T5, T6, T7, T8, T9>(task1, task2, task3, task4, task5, task6, task7, task8, task9), 0);
         }
 
         sealed class WhenAnyPromise<T1, T2, T3, T4, T5, T6, T7, T8, T9> : ISTaskSource<(int, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9)>
@@ -1620,6 +1637,8 @@ namespace SFramework.Threading.Tasks
 
             public WhenAnyPromise(STask<T1> task1, STask<T2> task2, STask<T3> task3, STask<T4> task4, STask<T5> task5, STask<T6> task6, STask<T7> task7, STask<T8> task8, STask<T9> task9)
             {
+                TaskTracker.TrackActiveTask(this, 3);
+
                 this.completedCount = 0;
                 {
                     var awaiter = task1.GetAwaiter();
@@ -1959,6 +1978,7 @@ namespace SFramework.Threading.Tasks
 
             public (int, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9) GetResult(short token)
             {
+                TaskTracker.RemoveTracking(this);
                 GC.SuppressFinalize(this);
                 return core.GetResult(token);
             }
@@ -1984,11 +2004,9 @@ namespace SFramework.Threading.Tasks
             }
         }
 
-        public static STask<(int winArgumentIndex, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9, T10 result10)> WhenAny<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(STask<T1> task1, STask<T2> task2,
-            STask<T3> task3, STask<T4> task4, STask<T5> task5, STask<T6> task6, STask<T7> task7, STask<T8> task8, STask<T9> task9, STask<T10> task10)
+        public static STask<(int winArgumentIndex, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9, T10 result10)> WhenAny<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(STask<T1> task1, STask<T2> task2, STask<T3> task3, STask<T4> task4, STask<T5> task5, STask<T6> task6, STask<T7> task7, STask<T8> task8, STask<T9> task9, STask<T10> task10)
         {
-            return new STask<(int winArgumentIndex, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9, T10 result10)>(
-                new WhenAnyPromise<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(task1, task2, task3, task4, task5, task6, task7, task8, task9, task10), 0);
+            return new STask<(int winArgumentIndex, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9, T10 result10)>(new WhenAnyPromise<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(task1, task2, task3, task4, task5, task6, task7, task8, task9, task10), 0);
         }
 
         sealed class WhenAnyPromise<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> : ISTaskSource<(int, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9, T10 result10)>
@@ -1998,6 +2016,8 @@ namespace SFramework.Threading.Tasks
 
             public WhenAnyPromise(STask<T1> task1, STask<T2> task2, STask<T3> task3, STask<T4> task4, STask<T5> task5, STask<T6> task6, STask<T7> task7, STask<T8> task8, STask<T9> task9, STask<T10> task10)
             {
+                TaskTracker.TrackActiveTask(this, 3);
+
                 this.completedCount = 0;
                 {
                     var awaiter = task1.GetAwaiter();
@@ -2374,6 +2394,7 @@ namespace SFramework.Threading.Tasks
 
             public (int, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9, T10 result10) GetResult(short token)
             {
+                TaskTracker.RemoveTracking(this);
                 GC.SuppressFinalize(this);
                 return core.GetResult(token);
             }
@@ -2399,11 +2420,9 @@ namespace SFramework.Threading.Tasks
             }
         }
 
-        public static STask<(int winArgumentIndex, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9, T10 result10, T11 result11)> WhenAny<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>(STask<T1> task1,
-            STask<T2> task2, STask<T3> task3, STask<T4> task4, STask<T5> task5, STask<T6> task6, STask<T7> task7, STask<T8> task8, STask<T9> task9, STask<T10> task10, STask<T11> task11)
+        public static STask<(int winArgumentIndex, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9, T10 result10, T11 result11)> WhenAny<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>(STask<T1> task1, STask<T2> task2, STask<T3> task3, STask<T4> task4, STask<T5> task5, STask<T6> task6, STask<T7> task7, STask<T8> task8, STask<T9> task9, STask<T10> task10, STask<T11> task11)
         {
-            return new STask<(int winArgumentIndex, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9, T10 result10, T11 result11)>(
-                new WhenAnyPromise<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>(task1, task2, task3, task4, task5, task6, task7, task8, task9, task10, task11), 0);
+            return new STask<(int winArgumentIndex, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9, T10 result10, T11 result11)>(new WhenAnyPromise<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>(task1, task2, task3, task4, task5, task6, task7, task8, task9, task10, task11), 0);
         }
 
         sealed class WhenAnyPromise<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> : ISTaskSource<(int, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9, T10 result10, T11 result11)>
@@ -2413,6 +2432,8 @@ namespace SFramework.Threading.Tasks
 
             public WhenAnyPromise(STask<T1> task1, STask<T2> task2, STask<T3> task3, STask<T4> task4, STask<T5> task5, STask<T6> task6, STask<T7> task7, STask<T8> task8, STask<T9> task9, STask<T10> task10, STask<T11> task11)
             {
+                TaskTracker.TrackActiveTask(this, 3);
+
                 this.completedCount = 0;
                 {
                     var awaiter = task1.GetAwaiter();
@@ -2826,6 +2847,7 @@ namespace SFramework.Threading.Tasks
 
             public (int, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9, T10 result10, T11 result11) GetResult(short token)
             {
+                TaskTracker.RemoveTracking(this);
                 GC.SuppressFinalize(this);
                 return core.GetResult(token);
             }
@@ -2851,11 +2873,9 @@ namespace SFramework.Threading.Tasks
             }
         }
 
-        public static STask<(int winArgumentIndex, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9, T10 result10, T11 result11, T12 result12)> WhenAny<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>(
-            STask<T1> task1, STask<T2> task2, STask<T3> task3, STask<T4> task4, STask<T5> task5, STask<T6> task6, STask<T7> task7, STask<T8> task8, STask<T9> task9, STask<T10> task10, STask<T11> task11, STask<T12> task12)
+        public static STask<(int winArgumentIndex, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9, T10 result10, T11 result11, T12 result12)> WhenAny<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>(STask<T1> task1, STask<T2> task2, STask<T3> task3, STask<T4> task4, STask<T5> task5, STask<T6> task6, STask<T7> task7, STask<T8> task8, STask<T9> task9, STask<T10> task10, STask<T11> task11, STask<T12> task12)
         {
-            return new STask<(int winArgumentIndex, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9, T10 result10, T11 result11, T12 result12)>(
-                new WhenAnyPromise<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>(task1, task2, task3, task4, task5, task6, task7, task8, task9, task10, task11, task12), 0);
+            return new STask<(int winArgumentIndex, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9, T10 result10, T11 result11, T12 result12)>(new WhenAnyPromise<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>(task1, task2, task3, task4, task5, task6, task7, task8, task9, task10, task11, task12), 0);
         }
 
         sealed class WhenAnyPromise<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> : ISTaskSource<(int, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9, T10 result10, T11 result11, T12 result12)>
@@ -2865,6 +2885,8 @@ namespace SFramework.Threading.Tasks
 
             public WhenAnyPromise(STask<T1> task1, STask<T2> task2, STask<T3> task3, STask<T4> task4, STask<T5> task5, STask<T6> task6, STask<T7> task7, STask<T8> task8, STask<T9> task9, STask<T10> task10, STask<T11> task11, STask<T12> task12)
             {
+                TaskTracker.TrackActiveTask(this, 3);
+
                 this.completedCount = 0;
                 {
                     var awaiter = task1.GetAwaiter();
@@ -3315,6 +3337,7 @@ namespace SFramework.Threading.Tasks
 
             public (int, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9, T10 result10, T11 result11, T12 result12) GetResult(short token)
             {
+                TaskTracker.RemoveTracking(this);
                 GC.SuppressFinalize(this);
                 return core.GetResult(token);
             }
@@ -3340,22 +3363,20 @@ namespace SFramework.Threading.Tasks
             }
         }
 
-        public static STask<(int winArgumentIndex, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9, T10 result10, T11 result11, T12 result12, T13 result13)>
-            WhenAny<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>(STask<T1> task1, STask<T2> task2, STask<T3> task3, STask<T4> task4, STask<T5> task5, STask<T6> task6, STask<T7> task7, STask<T8> task8, STask<T9> task9, STask<T10> task10, STask<T11> task11,
-                STask<T12> task12, STask<T13> task13)
+        public static STask<(int winArgumentIndex, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9, T10 result10, T11 result11, T12 result12, T13 result13)> WhenAny<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>(STask<T1> task1, STask<T2> task2, STask<T3> task3, STask<T4> task4, STask<T5> task5, STask<T6> task6, STask<T7> task7, STask<T8> task8, STask<T9> task9, STask<T10> task10, STask<T11> task11, STask<T12> task12, STask<T13> task13)
         {
-            return new STask<(int winArgumentIndex, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9, T10 result10, T11 result11, T12 result12, T13 result13)>(
-                new WhenAnyPromise<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>(task1, task2, task3, task4, task5, task6, task7, task8, task9, task10, task11, task12, task13), 0);
+            return new STask<(int winArgumentIndex, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9, T10 result10, T11 result11, T12 result12, T13 result13)>(new WhenAnyPromise<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>(task1, task2, task3, task4, task5, task6, task7, task8, task9, task10, task11, task12, task13), 0);
         }
 
-        sealed class WhenAnyPromise<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> : ISTaskSource<(int, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9, T10 result10, T11 result11, T12 result12, T13
-            result13)>
+        sealed class WhenAnyPromise<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> : ISTaskSource<(int, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9, T10 result10, T11 result11, T12 result12, T13 result13)>
         {
             int completedCount;
             STaskCompletionSourceCore<(int, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9, T10 result10, T11 result11, T12 result12, T13 result13)> core;
 
             public WhenAnyPromise(STask<T1> task1, STask<T2> task2, STask<T3> task3, STask<T4> task4, STask<T5> task5, STask<T6> task6, STask<T7> task7, STask<T8> task8, STask<T9> task9, STask<T10> task10, STask<T11> task11, STask<T12> task12, STask<T13> task13)
             {
+                TaskTracker.TrackActiveTask(this, 3);
+
                 this.completedCount = 0;
                 {
                     var awaiter = task1.GetAwaiter();
@@ -3843,6 +3864,7 @@ namespace SFramework.Threading.Tasks
 
             public (int, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9, T10 result10, T11 result11, T12 result12, T13 result13) GetResult(short token)
             {
+                TaskTracker.RemoveTracking(this);
                 GC.SuppressFinalize(this);
                 return core.GetResult(token);
             }
@@ -3868,23 +3890,20 @@ namespace SFramework.Threading.Tasks
             }
         }
 
-        public static STask<(int winArgumentIndex, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9, T10 result10, T11 result11, T12 result12, T13 result13, T14 result14)>
-            WhenAny<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>(STask<T1> task1, STask<T2> task2, STask<T3> task3, STask<T4> task4, STask<T5> task5, STask<T6> task6, STask<T7> task7, STask<T8> task8, STask<T9> task9, STask<T10> task10,
-                STask<T11> task11, STask<T12> task12, STask<T13> task13, STask<T14> task14)
+        public static STask<(int winArgumentIndex, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9, T10 result10, T11 result11, T12 result12, T13 result13, T14 result14)> WhenAny<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>(STask<T1> task1, STask<T2> task2, STask<T3> task3, STask<T4> task4, STask<T5> task5, STask<T6> task6, STask<T7> task7, STask<T8> task8, STask<T9> task9, STask<T10> task10, STask<T11> task11, STask<T12> task12, STask<T13> task13, STask<T14> task14)
         {
-            return new STask<(int winArgumentIndex, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9, T10 result10, T11 result11, T12 result12, T13 result13, T14 result14)>(
-                new WhenAnyPromise<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>(task1, task2, task3, task4, task5, task6, task7, task8, task9, task10, task11, task12, task13, task14), 0);
+            return new STask<(int winArgumentIndex, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9, T10 result10, T11 result11, T12 result12, T13 result13, T14 result14)>(new WhenAnyPromise<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>(task1, task2, task3, task4, task5, task6, task7, task8, task9, task10, task11, task12, task13, task14), 0);
         }
 
-        sealed class WhenAnyPromise<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> : ISTaskSource<(int, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9, T10 result10, T11 result11, T12 result12,
-            T13 result13, T14 result14)>
+        sealed class WhenAnyPromise<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> : ISTaskSource<(int, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9, T10 result10, T11 result11, T12 result12, T13 result13, T14 result14)>
         {
             int completedCount;
             STaskCompletionSourceCore<(int, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9, T10 result10, T11 result11, T12 result12, T13 result13, T14 result14)> core;
 
-            public WhenAnyPromise(STask<T1> task1, STask<T2> task2, STask<T3> task3, STask<T4> task4, STask<T5> task5, STask<T6> task6, STask<T7> task7, STask<T8> task8, STask<T9> task9, STask<T10> task10, STask<T11> task11, STask<T12> task12, STask<T13> task13,
-                STask<T14> task14)
+            public WhenAnyPromise(STask<T1> task1, STask<T2> task2, STask<T3> task3, STask<T4> task4, STask<T5> task5, STask<T6> task6, STask<T7> task7, STask<T8> task8, STask<T9> task9, STask<T10> task10, STask<T11> task11, STask<T12> task12, STask<T13> task13, STask<T14> task14)
             {
+                TaskTracker.TrackActiveTask(this, 3);
+
                 this.completedCount = 0;
                 {
                     var awaiter = task1.GetAwaiter();
@@ -4409,6 +4428,7 @@ namespace SFramework.Threading.Tasks
 
             public (int, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9, T10 result10, T11 result11, T12 result12, T13 result13, T14 result14) GetResult(short token)
             {
+                TaskTracker.RemoveTracking(this);
                 GC.SuppressFinalize(this);
                 return core.GetResult(token);
             }
@@ -4434,23 +4454,20 @@ namespace SFramework.Threading.Tasks
             }
         }
 
-        public static STask<(int winArgumentIndex, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9, T10 result10, T11 result11, T12 result12, T13 result13, T14 result14, T15 result15)>
-            WhenAny<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>(STask<T1> task1, STask<T2> task2, STask<T3> task3, STask<T4> task4, STask<T5> task5, STask<T6> task6, STask<T7> task7, STask<T8> task8, STask<T9> task9, STask<T10> task10,
-                STask<T11> task11, STask<T12> task12, STask<T13> task13, STask<T14> task14, STask<T15> task15)
+        public static STask<(int winArgumentIndex, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9, T10 result10, T11 result11, T12 result12, T13 result13, T14 result14, T15 result15)> WhenAny<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>(STask<T1> task1, STask<T2> task2, STask<T3> task3, STask<T4> task4, STask<T5> task5, STask<T6> task6, STask<T7> task7, STask<T8> task8, STask<T9> task9, STask<T10> task10, STask<T11> task11, STask<T12> task12, STask<T13> task13, STask<T14> task14, STask<T15> task15)
         {
-            return new STask<(int winArgumentIndex, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9, T10 result10, T11 result11, T12 result12, T13 result13, T14 result14, T15 result15)>(
-                new WhenAnyPromise<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>(task1, task2, task3, task4, task5, task6, task7, task8, task9, task10, task11, task12, task13, task14, task15), 0);
+            return new STask<(int winArgumentIndex, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9, T10 result10, T11 result11, T12 result12, T13 result13, T14 result14, T15 result15)>(new WhenAnyPromise<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>(task1, task2, task3, task4, task5, task6, task7, task8, task9, task10, task11, task12, task13, task14, task15), 0);
         }
 
-        sealed class WhenAnyPromise<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> : ISTaskSource<(int, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9, T10 result10, T11 result11, T12
-            result12, T13 result13, T14 result14, T15 result15)>
+        sealed class WhenAnyPromise<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> : ISTaskSource<(int, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9, T10 result10, T11 result11, T12 result12, T13 result13, T14 result14, T15 result15)>
         {
             int completedCount;
             STaskCompletionSourceCore<(int, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9, T10 result10, T11 result11, T12 result12, T13 result13, T14 result14, T15 result15)> core;
 
-            public WhenAnyPromise(STask<T1> task1, STask<T2> task2, STask<T3> task3, STask<T4> task4, STask<T5> task5, STask<T6> task6, STask<T7> task7, STask<T8> task8, STask<T9> task9, STask<T10> task10, STask<T11> task11, STask<T12> task12, STask<T13> task13,
-                STask<T14> task14, STask<T15> task15)
+            public WhenAnyPromise(STask<T1> task1, STask<T2> task2, STask<T3> task3, STask<T4> task4, STask<T5> task5, STask<T6> task6, STask<T7> task7, STask<T8> task8, STask<T9> task9, STask<T10> task10, STask<T11> task11, STask<T12> task12, STask<T13> task13, STask<T14> task14, STask<T15> task15)
             {
+                TaskTracker.TrackActiveTask(this, 3);
+
                 this.completedCount = 0;
                 {
                     var awaiter = task1.GetAwaiter();
@@ -5012,6 +5029,7 @@ namespace SFramework.Threading.Tasks
 
             public (int, T1 result1, T2 result2, T3 result3, T4 result4, T5 result5, T6 result6, T7 result7, T8 result8, T9 result9, T10 result10, T11 result11, T12 result12, T13 result13, T14 result14, T15 result15) GetResult(short token)
             {
+                TaskTracker.RemoveTracking(this);
                 GC.SuppressFinalize(this);
                 return core.GetResult(token);
             }
@@ -5036,5 +5054,6 @@ namespace SFramework.Threading.Tasks
                 GetResult(token);
             }
         }
+
     }
 }
