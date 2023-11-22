@@ -35,13 +35,15 @@ namespace SFramework.Threading.Tasks
             private STaskCompletionSourceCore<T[]> core;//won't reset, if called after GetResult, invoke TrySetException
             
             /*
-             由于 WhenAllPromise 依靠的是外部提供的 task 进行工作，因此没办法复用，无法池化，也就没有重置 core 的必要了
-             当多次等待 WhenAll 时，会抛出 tasks 中的 token 不匹配异常，不用担心多次等待的问题
+             由于 WhenAllPromise 依靠的是外部提供的 STask 进行工作，因此没办法复用，无法池化，也就没有重置 core 的必要了
+             当多次等待 WhenAll 时，会抛出 STask[] 中 STask 的 token 不匹配异常，不用担心多次等待的问题
              每次使用 WhenAll 都会有 GC ，少用为妙嗷
              */
             
             public WhenAllPromise(STask<T>[] tasks, int tasksLength)
             {
+                TaskTracker.TrackActiveTask(this, 3);
+                
                 this.completeCount = 0;
 
                 if (tasksLength == 0)
@@ -72,8 +74,8 @@ namespace SFramework.Threading.Tasks
                     }
                     else
                     {
-                        //我们不会单独 await task(in tasks) 了，状态机也不会调用 awaiter.OnCompleted ，因此我们要手动注册回调方法
-                        //当 task 完成后，调用 TryInvokeContinuation 计数
+                        //我们无法单独 await STask ，状态机就不会调用 STask.awaiter.OnCompleted ，因此我们要手动注册回调方法
+                        //当 STask 完成后，调用 TryInvokeContinuation 计数
                         awaiter.SourceOnCompleted(state =>
                         {
                             using (var t = (StateTuple<WhenAllPromise<T>, STask<T>.Awaiter, int>)state)
@@ -93,11 +95,11 @@ namespace SFramework.Threading.Tasks
                 }
                 catch (Exception exception)
                 {
-                    self.core.TrySetException(exception);
+                    self.core.TrySetException(exception); // 可能触发多次 await 异常
                     return;
                 }
 
-                if (Interlocked.Increment(ref self.completeCount) == self.result.Length)//所有task都完成后，调用 TrySetResult
+                if (Interlocked.Increment(ref self.completeCount) == self.result.Length)//所有STask都完成后，调用 TrySetResult
                 {
                     self.core.TrySetResult(self.result);
                 }
@@ -115,6 +117,7 @@ namespace SFramework.Threading.Tasks
             
             public T[] GetResult(short token)
             {
+                TaskTracker.RemoveTracking(this);
                 GC.SuppressFinalize(this);//这是在干什么，既没有手写异构函数也没有实现IDisposable接口——因此这句代码不会起作用
                 return this.core.GetResult(token);
             }
@@ -159,13 +162,15 @@ namespace SFramework.Threading.Tasks
             private STaskCompletionSourceCore<AsyncUnit> core;//won't reset, if called after GetResult, invoke TrySetException
 
             /*
-             由于 WhenAllPromise 依靠的是外部提供的 task 进行工作，因此没办法复用，无法池化，也就没有重置 core 的必要了
-             当多次等待 WhenAll 时，会抛出 tasks 中的 token 不匹配异常，不用担心多次等待的问题
+             由于 WhenAllPromise 依靠的是外部提供的 STask 进行工作，因此没办法复用，无法池化，也就没有重置 core 的必要了
+             当多次等待 WhenAll 时，会抛出 STask[] 中 STask 的 token 不匹配异常，不用担心多次等待的问题
              每次使用 WhenAll 都会有 GC ，少用为妙嗷
              */
 
             public WhenAllPromise(STask[] tasks, int tasksLength)
             {
+                TaskTracker.TrackActiveTask(this, 3);
+                
                 this.tasksLength = tasksLength;
                 this.completeCount = 0;
 
@@ -194,8 +199,8 @@ namespace SFramework.Threading.Tasks
                     }
                     else
                     {
-                        //我们不会单独 await task(in tasks) 了，状态机也不会调用 awaiter.OnCompleted ，因此我们要手动注册回调方法
-                        //当 task 完成后，调用 TryInvokeContinuation 计数
+                        //我们无法单独 await STask ，状态机就不会调用 STask.awaiter.OnCompleted ，因此我们要手动注册回调方法
+                        //当 STask 完成后，调用 TryInvokeContinuation 计数
                         awaiter.SourceOnCompleted(state =>
                         {
                             using (var t = (StateTuple<WhenAllPromise, STask.Awaiter>)state)
@@ -215,11 +220,11 @@ namespace SFramework.Threading.Tasks
                 }
                 catch (Exception exception)
                 {
-                    self.core.TrySetException(exception);
+                    self.core.TrySetException(exception); // 可能触发多次 await 异常
                     return;
                 }
 
-                if (Interlocked.Increment(ref self.completeCount) == self.tasksLength)//所有task都完成后，调用 TrySetResult
+                if (Interlocked.Increment(ref self.completeCount) == self.tasksLength)//所有STask都完成后，调用 TrySetResult
                 {
                     self.core.TrySetResult(AsyncUnit.Default);
                 }
@@ -237,6 +242,7 @@ namespace SFramework.Threading.Tasks
 
             public void GetResult(short token)
             {
+                TaskTracker.RemoveTracking(this);
                 GC.SuppressFinalize(this);//这是在干什么，既没有手写异构函数也没有实现IDisposable接口——因此这句代码不会起作用
                 this.core.GetResult(token);
             }

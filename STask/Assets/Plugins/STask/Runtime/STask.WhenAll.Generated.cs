@@ -1,7 +1,8 @@
+using SFramework.Threading.Tasks;
 using SFramework.Threading.Tasks.Internal;
 using System;
-using System.Collections;
-using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
 using System.Threading;
 
 namespace SFramework.Threading.Tasks
@@ -9,7 +10,7 @@ namespace SFramework.Threading.Tasks
     public partial struct STask
     {
         //让 STask.WhenAll 支持不同返回类型的 STask
-
+        
         public static STask<(T1, T2)> WhenAll<T1, T2>(STask<T1> task1, STask<T2> task2)
         {
             if (task1.Status.IsCompletedSuccessfully() && task2.Status.IsCompletedSuccessfully())
@@ -19,16 +20,18 @@ namespace SFramework.Threading.Tasks
 
             return new STask<(T1, T2)>(new WhenAllPromise<T1, T2>(task1, task2), 0);
         }
-        
-        private sealed class WhenAllPromise<T1, T2> : ISTaskSource<(T1, T2)>
+
+        sealed class WhenAllPromise<T1, T2> : ISTaskSource<(T1, T2)>
         {
-            private T1 t1 = default;
-            private T2 t2 = default;
-            private int completedCount;
-            private STaskCompletionSourceCore<(T1, T2)> core;
+            T1 t1 = default;
+            T2 t2 = default;
+            int completedCount;
+            STaskCompletionSourceCore<(T1, T2)> core;
 
             public WhenAllPromise(STask<T1> task1, STask<T2> task2)
             {
+                TaskTracker.TrackActiveTask(this, 3);
+
                 this.completedCount = 0;
                 {
                     var awaiter = task1.GetAwaiter();
@@ -65,8 +68,8 @@ namespace SFramework.Threading.Tasks
                     }
                 }
             }
-            
-            private static void TryInvokeContinuationT1(WhenAllPromise<T1,T2> self,in STask<T1>.Awaiter awaiter)
+
+            static void TryInvokeContinuationT1(WhenAllPromise<T1, T2> self, in STask<T1>.Awaiter awaiter)
             {
                 try
                 {
@@ -77,14 +80,14 @@ namespace SFramework.Threading.Tasks
                     self.core.TrySetException(ex);
                     return;
                 }
-
+                
                 if (Interlocked.Increment(ref self.completedCount) == 2)
                 {
                     self.core.TrySetResult((self.t1, self.t2));
                 }
             }
-            
-            private static void TryInvokeContinuationT2(WhenAllPromise<T1,T2> self,in STask<T2>.Awaiter awaiter)
+
+            static void TryInvokeContinuationT2(WhenAllPromise<T1, T2> self, in STask<T2>.Awaiter awaiter)
             {
                 try
                 {
@@ -95,36 +98,41 @@ namespace SFramework.Threading.Tasks
                     self.core.TrySetException(ex);
                     return;
                 }
-
+                
                 if (Interlocked.Increment(ref self.completedCount) == 2)
                 {
                     self.core.TrySetResult((self.t1, self.t2));
                 }
             }
-            
-            public STaskStatus GetStatus(short token)
-            {
-                return this.core.GetStatus(token);
-            }
-            public void OnCompleted(Action<object> continuation, object state, short token)
-            {
-                this.core.OnCompleted(continuation, state, token);
-            }
+
+
             public (T1, T2) GetResult(short token)
             {
+                TaskTracker.RemoveTracking(this);
                 GC.SuppressFinalize(this);
-                return this.core.GetResult(token);
+                return core.GetResult(token);
             }
+
             void ISTaskSource.GetResult(short token)
             {
-                this.GetResult(token);
+                GetResult(token);
             }
+
+            public STaskStatus GetStatus(short token)
+            {
+                return core.GetStatus(token);
+            }
+
             public STaskStatus UnsafeGetStatus()
             {
-                return this.core.UnsafeGetStatus();
+                return core.UnsafeGetStatus();
+            }
+
+            public void OnCompleted(Action<object> continuation, object state, short token)
+            {
+                core.OnCompleted(continuation, state, token);
             }
         }
-        
         
         public static STask<(T1, T2, T3)> WhenAll<T1, T2, T3>(STask<T1> task1, STask<T2> task2, STask<T3> task3)
         {
@@ -146,6 +154,8 @@ namespace SFramework.Threading.Tasks
 
             public WhenAllPromise(STask<T1> task1, STask<T2> task2, STask<T3> task3)
             {
+                TaskTracker.TrackActiveTask(this, 3);
+
                 this.completedCount = 0;
                 {
                     var awaiter = task1.GetAwaiter();
@@ -257,6 +267,7 @@ namespace SFramework.Threading.Tasks
 
             public (T1, T2, T3) GetResult(short token)
             {
+                TaskTracker.RemoveTracking(this);
                 GC.SuppressFinalize(this);
                 return core.GetResult(token);
             }
@@ -303,6 +314,8 @@ namespace SFramework.Threading.Tasks
 
             public WhenAllPromise(STask<T1> task1, STask<T2> task2, STask<T3> task3, STask<T4> task4)
             {
+                TaskTracker.TrackActiveTask(this, 3);
+
                 this.completedCount = 0;
                 {
                     var awaiter = task1.GetAwaiter();
@@ -449,6 +462,7 @@ namespace SFramework.Threading.Tasks
 
             public (T1, T2, T3, T4) GetResult(short token)
             {
+                TaskTracker.RemoveTracking(this);
                 GC.SuppressFinalize(this);
                 return core.GetResult(token);
             }
@@ -496,6 +510,8 @@ namespace SFramework.Threading.Tasks
 
             public WhenAllPromise(STask<T1> task1, STask<T2> task2, STask<T3> task3, STask<T4> task4, STask<T5> task5)
             {
+                TaskTracker.TrackActiveTask(this, 3);
+
                 this.completedCount = 0;
                 {
                     var awaiter = task1.GetAwaiter();
@@ -677,6 +693,7 @@ namespace SFramework.Threading.Tasks
 
             public (T1, T2, T3, T4, T5) GetResult(short token)
             {
+                TaskTracker.RemoveTracking(this);
                 GC.SuppressFinalize(this);
                 return core.GetResult(token);
             }
@@ -725,6 +742,8 @@ namespace SFramework.Threading.Tasks
 
             public WhenAllPromise(STask<T1> task1, STask<T2> task2, STask<T3> task3, STask<T4> task4, STask<T5> task5, STask<T6> task6)
             {
+                TaskTracker.TrackActiveTask(this, 3);
+
                 this.completedCount = 0;
                 {
                     var awaiter = task1.GetAwaiter();
@@ -941,6 +960,7 @@ namespace SFramework.Threading.Tasks
 
             public (T1, T2, T3, T4, T5, T6) GetResult(short token)
             {
+                TaskTracker.RemoveTracking(this);
                 GC.SuppressFinalize(this);
                 return core.GetResult(token);
             }
@@ -990,6 +1010,8 @@ namespace SFramework.Threading.Tasks
 
             public WhenAllPromise(STask<T1> task1, STask<T2> task2, STask<T3> task3, STask<T4> task4, STask<T5> task5, STask<T6> task6, STask<T7> task7)
             {
+                TaskTracker.TrackActiveTask(this, 3);
+
                 this.completedCount = 0;
                 {
                     var awaiter = task1.GetAwaiter();
@@ -1241,6 +1263,7 @@ namespace SFramework.Threading.Tasks
 
             public (T1, T2, T3, T4, T5, T6, T7) GetResult(short token)
             {
+                TaskTracker.RemoveTracking(this);
                 GC.SuppressFinalize(this);
                 return core.GetResult(token);
             }
@@ -1291,6 +1314,8 @@ namespace SFramework.Threading.Tasks
 
             public WhenAllPromise(STask<T1> task1, STask<T2> task2, STask<T3> task3, STask<T4> task4, STask<T5> task5, STask<T6> task6, STask<T7> task7, STask<T8> task8)
             {
+                TaskTracker.TrackActiveTask(this, 3);
+
                 this.completedCount = 0;
                 {
                     var awaiter = task1.GetAwaiter();
@@ -1577,6 +1602,7 @@ namespace SFramework.Threading.Tasks
 
             public (T1, T2, T3, T4, T5, T6, T7, T8) GetResult(short token)
             {
+                TaskTracker.RemoveTracking(this);
                 GC.SuppressFinalize(this);
                 return core.GetResult(token);
             }
@@ -1628,6 +1654,8 @@ namespace SFramework.Threading.Tasks
 
             public WhenAllPromise(STask<T1> task1, STask<T2> task2, STask<T3> task3, STask<T4> task4, STask<T5> task5, STask<T6> task6, STask<T7> task7, STask<T8> task8, STask<T9> task9)
             {
+                TaskTracker.TrackActiveTask(this, 3);
+
                 this.completedCount = 0;
                 {
                     var awaiter = task1.GetAwaiter();
@@ -1949,6 +1977,7 @@ namespace SFramework.Threading.Tasks
 
             public (T1, T2, T3, T4, T5, T6, T7, T8, T9) GetResult(short token)
             {
+                TaskTracker.RemoveTracking(this);
                 GC.SuppressFinalize(this);
                 return core.GetResult(token);
             }
@@ -2001,6 +2030,8 @@ namespace SFramework.Threading.Tasks
 
             public WhenAllPromise(STask<T1> task1, STask<T2> task2, STask<T3> task3, STask<T4> task4, STask<T5> task5, STask<T6> task6, STask<T7> task7, STask<T8> task8, STask<T9> task9, STask<T10> task10)
             {
+                TaskTracker.TrackActiveTask(this, 3);
+
                 this.completedCount = 0;
                 {
                     var awaiter = task1.GetAwaiter();
@@ -2357,6 +2388,7 @@ namespace SFramework.Threading.Tasks
 
             public (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10) GetResult(short token)
             {
+                TaskTracker.RemoveTracking(this);
                 GC.SuppressFinalize(this);
                 return core.GetResult(token);
             }
@@ -2410,6 +2442,8 @@ namespace SFramework.Threading.Tasks
 
             public WhenAllPromise(STask<T1> task1, STask<T2> task2, STask<T3> task3, STask<T4> task4, STask<T5> task5, STask<T6> task6, STask<T7> task7, STask<T8> task8, STask<T9> task9, STask<T10> task10, STask<T11> task11)
             {
+                TaskTracker.TrackActiveTask(this, 3);
+
                 this.completedCount = 0;
                 {
                     var awaiter = task1.GetAwaiter();
@@ -2801,6 +2835,7 @@ namespace SFramework.Threading.Tasks
 
             public (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11) GetResult(short token)
             {
+                TaskTracker.RemoveTracking(this);
                 GC.SuppressFinalize(this);
                 return core.GetResult(token);
             }
@@ -2855,6 +2890,8 @@ namespace SFramework.Threading.Tasks
 
             public WhenAllPromise(STask<T1> task1, STask<T2> task2, STask<T3> task3, STask<T4> task4, STask<T5> task5, STask<T6> task6, STask<T7> task7, STask<T8> task8, STask<T9> task9, STask<T10> task10, STask<T11> task11, STask<T12> task12)
             {
+                TaskTracker.TrackActiveTask(this, 3);
+
                 this.completedCount = 0;
                 {
                     var awaiter = task1.GetAwaiter();
@@ -3281,6 +3318,7 @@ namespace SFramework.Threading.Tasks
 
             public (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12) GetResult(short token)
             {
+                TaskTracker.RemoveTracking(this);
                 GC.SuppressFinalize(this);
                 return core.GetResult(token);
             }
@@ -3336,6 +3374,8 @@ namespace SFramework.Threading.Tasks
 
             public WhenAllPromise(STask<T1> task1, STask<T2> task2, STask<T3> task3, STask<T4> task4, STask<T5> task5, STask<T6> task6, STask<T7> task7, STask<T8> task8, STask<T9> task9, STask<T10> task10, STask<T11> task11, STask<T12> task12, STask<T13> task13)
             {
+                TaskTracker.TrackActiveTask(this, 3);
+
                 this.completedCount = 0;
                 {
                     var awaiter = task1.GetAwaiter();
@@ -3797,6 +3837,7 @@ namespace SFramework.Threading.Tasks
 
             public (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13) GetResult(short token)
             {
+                TaskTracker.RemoveTracking(this);
                 GC.SuppressFinalize(this);
                 return core.GetResult(token);
             }
@@ -3853,6 +3894,8 @@ namespace SFramework.Threading.Tasks
 
             public WhenAllPromise(STask<T1> task1, STask<T2> task2, STask<T3> task3, STask<T4> task4, STask<T5> task5, STask<T6> task6, STask<T7> task7, STask<T8> task8, STask<T9> task9, STask<T10> task10, STask<T11> task11, STask<T12> task12, STask<T13> task13, STask<T14> task14)
             {
+                TaskTracker.TrackActiveTask(this, 3);
+
                 this.completedCount = 0;
                 {
                     var awaiter = task1.GetAwaiter();
@@ -4349,6 +4392,7 @@ namespace SFramework.Threading.Tasks
 
             public (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14) GetResult(short token)
             {
+                TaskTracker.RemoveTracking(this);
                 GC.SuppressFinalize(this);
                 return core.GetResult(token);
             }
@@ -4406,6 +4450,8 @@ namespace SFramework.Threading.Tasks
 
             public WhenAllPromise(STask<T1> task1, STask<T2> task2, STask<T3> task3, STask<T4> task4, STask<T5> task5, STask<T6> task6, STask<T7> task7, STask<T8> task8, STask<T9> task9, STask<T10> task10, STask<T11> task11, STask<T12> task12, STask<T13> task13, STask<T14> task14, STask<T15> task15)
             {
+                TaskTracker.TrackActiveTask(this, 3);
+
                 this.completedCount = 0;
                 {
                     var awaiter = task1.GetAwaiter();
@@ -4937,6 +4983,7 @@ namespace SFramework.Threading.Tasks
 
             public (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15) GetResult(short token)
             {
+                TaskTracker.RemoveTracking(this);
                 GC.SuppressFinalize(this);
                 return core.GetResult(token);
             }

@@ -1,3 +1,4 @@
+using SFramework.Threading.Tasks.Internal;
 using System;
 using System.Threading;
 
@@ -5,12 +6,13 @@ namespace SFramework.Threading.Tasks
 {
     public partial struct STask
     {
+        /// <summary> Wait until predicate return true </summary>
         public static STask WaitUntil(Func<bool> predicate, PlayerLoopTiming timing = PlayerLoopTiming.Update, CancellationToken cancellationToken = default(CancellationToken))
         {
             return new STask(WaitUntilPromise.Create(predicate, timing, cancellationToken, out var token), token);
         }
 
-        sealed class WaitUntilPromise : ISTaskSource, IPlayerLoopItem, ITaskPoolNode<WaitUntilPromise>
+        private sealed class WaitUntilPromise : ISTaskSource, IPlayerLoopItem, ITaskPoolNode<WaitUntilPromise>
         {
             private static TaskPool<WaitUntilPromise> pool;
             private WaitUntilPromise nextNode;
@@ -42,6 +44,8 @@ namespace SFramework.Threading.Tasks
 
                 result.predicate = predicate;
                 result.cancellationToken = cancellationToken;
+
+                TaskTracker.TrackActiveTask(result, 3);
 
                 PlayerLoopHelper.AddAction(timing, result);
 
@@ -103,6 +107,7 @@ namespace SFramework.Threading.Tasks
 
             private bool TryReturn()
             {
+                TaskTracker.RemoveTracking(this);
                 this.core.Reset();
                 this.predicate = default;
                 this.cancellationToken = default;

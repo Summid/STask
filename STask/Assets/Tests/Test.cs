@@ -46,7 +46,7 @@ public class Test : MonoBehaviour
         Debug.LogWarning("Test End");
     }
 
-    public async void TestWhenAny()
+    public async STaskVoid TestWhenAny()
     {
         Debug.LogWarning("Test Start");
         var task1 = this.AsyncMethod(888);

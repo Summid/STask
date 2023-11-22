@@ -108,6 +108,8 @@ namespace SFramework.Threading.Tasks
                 result.progress = progress;
                 result.cancellationToken = cancellationToken;
 
+                TaskTracker.TrackActiveTask(result, 3);
+
                 PlayerLoopHelper.AddAction(timing, result);
 
                 token = result.core.Version;
@@ -165,6 +167,7 @@ namespace SFramework.Threading.Tasks
 
             private bool TryReturn()
             {
+                TaskTracker.RemoveTracking(this);
                 this.core.Reset();
                 this.asyncOperation = default;
                 this.progress = default;
@@ -273,6 +276,8 @@ namespace SFramework.Threading.Tasks
                 result.progress = progress;
                 result.cancellationToken = cancellationToken;
 
+                TaskTracker.TrackActiveTask(result, 3);
+
                 PlayerLoopHelper.AddAction(timing, result);
 
                 token = result.core.Version;
@@ -335,6 +340,7 @@ namespace SFramework.Threading.Tasks
 
             bool TryReturn()
             {
+                TaskTracker.RemoveTracking(this);
                 this.core.Reset();
                 this.asyncOperation = default;
                 this.progress = default;
@@ -446,6 +452,8 @@ namespace SFramework.Threading.Tasks
                 result.progress = progress;
                 result.cancellationToken = cancellationToken;
 
+                TaskTracker.TrackActiveTask(result, 3);
+
                 PlayerLoopHelper.AddAction(timing, result);
 
                 token = result.core.Version;
@@ -508,6 +516,7 @@ namespace SFramework.Threading.Tasks
 
             bool TryReturn()
             {
+                TaskTracker.RemoveTracking(this);
                 this.core.Reset();
                 this.asyncOperation = default;
                 this.progress = default;

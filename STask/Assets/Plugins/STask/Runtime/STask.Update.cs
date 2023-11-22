@@ -1,3 +1,4 @@
+using SFramework.Threading.Tasks.Internal;
 using System;
 using System.Threading;
 
@@ -52,6 +53,8 @@ namespace SFramework.Threading.Tasks
 
                 result.onUpdate = onUpdate;
                 result.cancellationToken = cancellationToken;
+
+                TaskTracker.TrackActiveTask(result, 3);
 
                 PlayerLoopHelper.AddAction(timing, result);
 
@@ -114,6 +117,7 @@ namespace SFramework.Threading.Tasks
 
             private bool TryReturn()
             {
+                TaskTracker.RemoveTracking(this);
                 this.core.Reset();
                 this.cancellationToken = default;
                 return pool.TryPush(this);

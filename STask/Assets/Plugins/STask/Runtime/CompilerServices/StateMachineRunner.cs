@@ -1,3 +1,4 @@
+using SFramework.Threading.Tasks.Internal;
 using System;
 using System.Runtime.CompilerServices;
 
@@ -59,6 +60,7 @@ namespace SFramework.Threading.Tasks.CompilerServices
             {
                 result = new AsyncSTaskVoid<TStateMachine>();
             }
+            TaskTracker.TrackActiveTask(result, 3);
 
             runnerFieldRef = result;// set runner before copied
             result.stateMachine = stateMachine;// copy struct StateMachine(in release build)
@@ -78,6 +80,7 @@ namespace SFramework.Threading.Tasks.CompilerServices
 
         public void Return()
         {
+            TaskTracker.RemoveTracking(this);
             this.stateMachine = default;
             pool.TryPush(this);
         }
@@ -125,6 +128,8 @@ namespace SFramework.Threading.Tasks.CompilerServices
             {
                 result = new AsyncSTask<TStateMachine>();
             }
+            TaskTracker.TrackActiveTask(result, 3);
+            
             runnerPromiseFieldRef = result;// set runner before copied
             result.stateMachine = stateMachine;
         }
@@ -140,6 +145,7 @@ namespace SFramework.Threading.Tasks.CompilerServices
 
         private void Return()
         {
+            TaskTracker.RemoveTracking(this);
             this.core.Reset();
             this.stateMachine = default;
             pool.TryPush(this);
@@ -147,6 +153,7 @@ namespace SFramework.Threading.Tasks.CompilerServices
 
         private bool TryReturn()
         {
+            TaskTracker.RemoveTracking(this);
             this.core.Reset();
             this.stateMachine = default;
             return pool.TryPush(this);
@@ -231,6 +238,7 @@ namespace SFramework.Threading.Tasks.CompilerServices
             {
                 result = new AsyncSTask<TStateMachine, T>();
             }
+            TaskTracker.TrackActiveTask(result, 3);
 
             runnerPromiseFieldRef = result; // set runner before copied.
             result.stateMachine = stateMachine; // copy struct StateMachine(in release build).
@@ -247,6 +255,7 @@ namespace SFramework.Threading.Tasks.CompilerServices
 
         private void Return()
         {
+            TaskTracker.RemoveTracking(this);
             this.core.Reset();
             this.stateMachine = default;
             pool.TryPush(this);
@@ -254,6 +263,7 @@ namespace SFramework.Threading.Tasks.CompilerServices
 
         private bool TryReturn()
         {
+            TaskTracker.RemoveTracking(this);
             this.core.Reset();
             this.stateMachine = default;
             return pool.TryPush(this);
