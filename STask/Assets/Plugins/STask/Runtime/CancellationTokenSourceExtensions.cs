@@ -16,7 +16,7 @@ namespace SFramework.Threading.Tasks
         /// <summary>
         /// 取代 <see cref="CancellationTokenSource.CancelAfter(TimeSpan)"/>，改为单线程
         /// </summary>
-        public static IDisposable CancelAfterSilm(this CancellationTokenSource cts, TimeSpan delayTimeSpan, DelayType delayType = DelayType.DeltaTime, PlayerLoopTiming delayTiming = PlayerLoopTiming.Update)
+        public static IDisposable CancelAfterSlim(this CancellationTokenSource cts, TimeSpan delayTimeSpan, DelayType delayType = DelayType.DeltaTime, PlayerLoopTiming delayTiming = PlayerLoopTiming.Update)
         {
             return PlayerLoopTimer.StartNew(delayTimeSpan, false, delayType, delayTiming, cts.Token, CancelCancellationTokenSourceStateDelegate, cts);
         }
@@ -24,9 +24,9 @@ namespace SFramework.Threading.Tasks
         /// <summary>
         /// 取代 <see cref="CancellationTokenSource.CancelAfter(int)"/>，改为单线程
         /// </summary>
-        public static IDisposable CancelAfterSilm(this CancellationTokenSource cts, int millisecondsDelay, DelayType delayType = DelayType.DeltaTime, PlayerLoopTiming delayTiming = PlayerLoopTiming.Update)
+        public static IDisposable CancelAfterSlim(this CancellationTokenSource cts, int millisecondsDelay, DelayType delayType = DelayType.DeltaTime, PlayerLoopTiming delayTiming = PlayerLoopTiming.Update)
         {
-            return CancelAfterSilm(cts, TimeSpan.FromMilliseconds(millisecondsDelay), delayType, delayTiming);
+            return CancelAfterSlim(cts, TimeSpan.FromMilliseconds(millisecondsDelay), delayType, delayTiming);
         }
     }
 }

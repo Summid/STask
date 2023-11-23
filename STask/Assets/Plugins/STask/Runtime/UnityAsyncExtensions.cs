@@ -23,14 +23,19 @@ namespace SFramework.Threading.Tasks
             return ToSTask(asyncOperation, cancellationToken: cancellationToken);
         }
 
-        public static STask ToSTask(this AsyncOperation asyncOperation, IProgress<float> progress = null, PlayerLoopTiming timing = PlayerLoopTiming.Update, CancellationToken cancellationToken = default(CancellationToken))
+        public static STask WithCancellation(this AsyncOperation asyncOperation, CancellationToken cancellationToken, bool cancelImmediately)
+        {
+            return ToSTask(asyncOperation, cancellationToken: cancellationToken, cancelImmediately: cancelImmediately);
+        }
+
+        public static STask ToSTask(this AsyncOperation asyncOperation, IProgress<float> progress = null, PlayerLoopTiming timing = PlayerLoopTiming.Update, CancellationToken cancellationToken = default(CancellationToken), bool cancelImmediately = false)
         {
             Error.ThrowArgumentNullException(asyncOperation, nameof(asyncOperation));
             if (cancellationToken.IsCancellationRequested)
                 return STask.FromCanceled(cancellationToken);
             if (asyncOperation.isDone)
                 return STask.CompletedTask;
-            return new STask(AsyncOperationConfiguredSource.Create(asyncOperation, timing, progress, cancellationToken, out short token), token);
+            return new STask(AsyncOperationConfiguredSource.Create(asyncOperation, timing, progress, cancellationToken, cancelImmediately, out short token), token);
         }
 
         public struct AsyncOperationAwaiter : ICriticalNotifyCompletion
@@ -87,12 +92,19 @@ namespace SFramework.Threading.Tasks
             private AsyncOperation asyncOperation;
             private IProgress<float> progress;
             private CancellationToken cancellationToken;
+            private CancellationTokenRegistration cancellationTokenRegistration;
+            private bool completed;
 
-            STaskCompletionSourceCore<AsyncUnit> core;
+            private STaskCompletionSourceCore<AsyncUnit> core;
 
-            private AsyncOperationConfiguredSource() { }
+            private Action<AsyncOperation> continuationAction;
 
-            public static ISTaskSource Create(AsyncOperation asyncOperation, PlayerLoopTiming timing, IProgress<float> progress, CancellationToken cancellationToken, out short token)
+            private AsyncOperationConfiguredSource()
+            {
+                this.continuationAction = this.Continuation;
+            }
+
+            public static ISTaskSource Create(AsyncOperation asyncOperation, PlayerLoopTiming timing, IProgress<float> progress, CancellationToken cancellationToken,bool cancelImmediately, out short token)
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
@@ -107,6 +119,18 @@ namespace SFramework.Threading.Tasks
                 result.asyncOperation = asyncOperation;
                 result.progress = progress;
                 result.cancellationToken = cancellationToken;
+                result.completed = false;
+
+                asyncOperation.completed += result.continuationAction;
+
+                if (cancelImmediately && cancellationToken.CanBeCanceled)
+                {
+                    result.cancellationTokenRegistration = cancellationToken.RegisterWithoutCaptureExecutionContext(state =>
+                    {
+                        var source = (AsyncOperationConfiguredSource)state;
+                        source.core.TrySetCanceled(source.cancellationToken);
+                    }, result);
+                }
 
                 TaskTracker.TrackActiveTask(result, 3);
 
@@ -145,6 +169,12 @@ namespace SFramework.Threading.Tasks
 
             public bool MoveNext()
             {
+                // Already completed
+                if (this.completed || this.asyncOperation == null)
+                {
+                    return false;
+                }
+                
                 if (this.cancellationToken.IsCancellationRequested)
                 {
                     this.core.TrySetCanceled(this.cancellationToken);
@@ -169,10 +199,32 @@ namespace SFramework.Threading.Tasks
             {
                 TaskTracker.RemoveTracking(this);
                 this.core.Reset();
+                this.asyncOperation.completed -= this.continuationAction;
                 this.asyncOperation = default;
                 this.progress = default;
                 this.cancellationToken = default;
+                this.cancellationTokenRegistration.Dispose();
                 return pool.TryPush(this);
+            }
+
+            private void Continuation(AsyncOperation _)
+            {
+                if (this.completed)
+                {
+                    this.TryReturn();
+                }
+                else
+                {
+                    this.completed = true;
+                    if (this.cancellationToken.IsCancellationRequested)
+                    {
+                        this.core.TrySetCanceled(this.cancellationToken);
+                    }
+                    else
+                    {
+                        this.core.TrySetResult(AsyncUnit.Default);
+                    }
+                }
             }
         }
         #endregion
@@ -189,12 +241,17 @@ namespace SFramework.Threading.Tasks
             return ToSTask(asyncOperation, cancellationToken: cancellationToken);
         }
 
-        public static STask<UnityEngine.Object> ToSTask(this AssetBundleRequest asyncOperation, IProgress<float> progress = null, PlayerLoopTiming timing = PlayerLoopTiming.Update, CancellationToken cancellationToken = default(CancellationToken))
+        public static STask<UnityEngine.Object> WithCancellation(this AssetBundleRequest asyncOperation, CancellationToken cancellationToken, bool cancelImmediately)
+        {
+            return ToSTask(asyncOperation, cancellationToken: cancellationToken, cancelImmediately: cancelImmediately);
+        }
+
+        public static STask<UnityEngine.Object> ToSTask(this AssetBundleRequest asyncOperation, IProgress<float> progress = null, PlayerLoopTiming timing = PlayerLoopTiming.Update, CancellationToken cancellationToken = default(CancellationToken),bool cancelImmediately = false)
         {
             Error.ThrowArgumentNullException(asyncOperation, nameof(asyncOperation));
             if (cancellationToken.IsCancellationRequested) return STask.FromCanceled<UnityEngine.Object>(cancellationToken);
             if (asyncOperation.isDone) return STask.FromResult(asyncOperation.asset);
-            return new STask<UnityEngine.Object>(AssetBundleRequestConfiguredSource.Create(asyncOperation, timing, progress, cancellationToken, out var token), token);
+            return new STask<UnityEngine.Object>(AssetBundleRequestConfiguredSource.Create(asyncOperation, timing, progress, cancellationToken,cancelImmediately, out var token), token);
         }
 
         public struct AssetBundleRequestAwaiter : ICriticalNotifyCompletion
@@ -255,12 +312,19 @@ namespace SFramework.Threading.Tasks
             private AssetBundleRequest asyncOperation;
             private IProgress<float> progress;
             private CancellationToken cancellationToken;
+            private CancellationTokenRegistration cancellationTokenRegistration;
+            private bool completed;
 
-            STaskCompletionSourceCore<UnityEngine.Object> core;
+            private STaskCompletionSourceCore<UnityEngine.Object> core;
 
-            private AssetBundleRequestConfiguredSource() { }
+            private Action<AsyncOperation> continuationAction;
 
-            public static ISTaskSource<UnityEngine.Object> Create(AssetBundleRequest asyncOperation, PlayerLoopTiming timing, IProgress<float> progress, CancellationToken cancellationToken, out short token)
+            private AssetBundleRequestConfiguredSource()
+            {
+                this.continuationAction = this.Continuation;
+            }
+
+            public static ISTaskSource<UnityEngine.Object> Create(AssetBundleRequest asyncOperation, PlayerLoopTiming timing, IProgress<float> progress, CancellationToken cancellationToken,bool cancelImmediately, out short token)
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
@@ -275,6 +339,18 @@ namespace SFramework.Threading.Tasks
                 result.asyncOperation = asyncOperation;
                 result.progress = progress;
                 result.cancellationToken = cancellationToken;
+                result.completed = false;
+
+                asyncOperation.completed += result.continuationAction;
+
+                if (cancelImmediately && cancellationToken.CanBeCanceled)
+                {
+                    result.cancellationTokenRegistration = result.cancellationToken.RegisterWithoutCaptureExecutionContext(state =>
+                    {
+                        var source = (AssetBundleRequestConfiguredSource)state;
+                        source.core.TrySetCanceled(source.cancellationToken);
+                    }, result);
+                }
 
                 TaskTracker.TrackActiveTask(result, 3);
 
@@ -318,6 +394,12 @@ namespace SFramework.Threading.Tasks
 
             public bool MoveNext()
             {
+                // Already completed
+                if (this.completed || this.asyncOperation == null)
+                {
+                    return false;
+                }
+                
                 if (this.cancellationToken.IsCancellationRequested)
                 {
                     this.core.TrySetCanceled(this.cancellationToken);
@@ -338,14 +420,36 @@ namespace SFramework.Threading.Tasks
                 return true;
             }
 
-            bool TryReturn()
+            private bool TryReturn()
             {
                 TaskTracker.RemoveTracking(this);
                 this.core.Reset();
+                this.asyncOperation.completed -= this.continuationAction;
                 this.asyncOperation = default;
                 this.progress = default;
                 this.cancellationToken = default;
+                this.cancellationTokenRegistration.Dispose();
                 return pool.TryPush(this);
+            }
+            
+            private void Continuation(AsyncOperation _)
+            {
+                if (this.completed)
+                {
+                    this.TryReturn();
+                }
+                else
+                {
+                    this.completed = true;
+                    if (this.cancellationToken.IsCancellationRequested)
+                    {
+                        this.core.TrySetCanceled(this.cancellationToken);
+                    }
+                    else
+                    {
+                        this.core.TrySetResult(this.asyncOperation.asset);
+                    }
+                }
             }
         }
         #endregion
@@ -361,19 +465,24 @@ namespace SFramework.Threading.Tasks
         {
             return ToSTask(asyncOperation, cancellationToken: cancellationToken);
         }
+        
+        public static STask<AssetBundle> WithCancellation(this AssetBundleCreateRequest asyncOperation, CancellationToken cancellationToken,bool cancelImmediately)
+        {
+            return ToSTask(asyncOperation, cancellationToken: cancellationToken, cancelImmediately: cancelImmediately);
+        }
 
-        public static STask<AssetBundle> ToSTask(this AssetBundleCreateRequest asyncOperation, IProgress<float> progress = null, PlayerLoopTiming timing = PlayerLoopTiming.Update, CancellationToken cancellationToken = default(CancellationToken))
+        public static STask<AssetBundle> ToSTask(this AssetBundleCreateRequest asyncOperation, IProgress<float> progress = null, PlayerLoopTiming timing = PlayerLoopTiming.Update, CancellationToken cancellationToken = default(CancellationToken),bool cancelImmediately = false)
         {
             Error.ThrowArgumentNullException(asyncOperation, nameof(asyncOperation));
             if (cancellationToken.IsCancellationRequested) return STask.FromCanceled<AssetBundle>(cancellationToken);
             if (asyncOperation.isDone) return STask.FromResult(asyncOperation.assetBundle);
-            return new STask<AssetBundle>(AssetBundleCreateRequestConfiguredSource.Create(asyncOperation, timing, progress, cancellationToken, out var token), token);
+            return new STask<AssetBundle>(AssetBundleCreateRequestConfiguredSource.Create(asyncOperation, timing, progress, cancellationToken, cancelImmediately, out var token), token);
         }
 
         public struct AssetBundleCreateRequestAwaiter : ICriticalNotifyCompletion
         {
-            AssetBundleCreateRequest asyncOperation;
-            Action<AsyncOperation> continuationAction;
+            private AssetBundleCreateRequest asyncOperation;
+            private Action<AsyncOperation> continuationAction;
 
             public AssetBundleCreateRequestAwaiter(AssetBundleCreateRequest asyncOperation)
             {
@@ -414,10 +523,10 @@ namespace SFramework.Threading.Tasks
             }
         }
 
-        sealed class AssetBundleCreateRequestConfiguredSource : ISTaskSource<AssetBundle>, IPlayerLoopItem, ITaskPoolNode<AssetBundleCreateRequestConfiguredSource>
+        private sealed class AssetBundleCreateRequestConfiguredSource : ISTaskSource<AssetBundle>, IPlayerLoopItem, ITaskPoolNode<AssetBundleCreateRequestConfiguredSource>
         {
-            static TaskPool<AssetBundleCreateRequestConfiguredSource> pool;
-            AssetBundleCreateRequestConfiguredSource nextNode;
+            private static TaskPool<AssetBundleCreateRequestConfiguredSource> pool;
+            private AssetBundleCreateRequestConfiguredSource nextNode;
             public ref AssetBundleCreateRequestConfiguredSource NextNode => ref this.nextNode;
 
             static AssetBundleCreateRequestConfiguredSource()
@@ -425,18 +534,22 @@ namespace SFramework.Threading.Tasks
                 TaskPool.RegisterSizeGetter(typeof(AssetBundleCreateRequestConfiguredSource), () => pool.Size);
             }
 
-            AssetBundleCreateRequest asyncOperation;
-            IProgress<float> progress;
-            CancellationToken cancellationToken;
+            private AssetBundleCreateRequest asyncOperation;
+            private IProgress<float> progress;
+            private CancellationToken cancellationToken;
+            private CancellationTokenRegistration cancellationTokenRegistration;
+            private bool completed;
 
-            STaskCompletionSourceCore<AssetBundle> core;
+            private STaskCompletionSourceCore<AssetBundle> core;
 
-            AssetBundleCreateRequestConfiguredSource()
+            private Action<AsyncOperation> continuationAction;
+
+            private AssetBundleCreateRequestConfiguredSource()
             {
-
+                this.continuationAction = this.Continuation;
             }
 
-            public static ISTaskSource<AssetBundle> Create(AssetBundleCreateRequest asyncOperation, PlayerLoopTiming timing, IProgress<float> progress, CancellationToken cancellationToken, out short token)
+            public static ISTaskSource<AssetBundle> Create(AssetBundleCreateRequest asyncOperation, PlayerLoopTiming timing, IProgress<float> progress, CancellationToken cancellationToken,bool cancelImmediately, out short token)
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
@@ -451,6 +564,18 @@ namespace SFramework.Threading.Tasks
                 result.asyncOperation = asyncOperation;
                 result.progress = progress;
                 result.cancellationToken = cancellationToken;
+                result.completed = false;
+
+                asyncOperation.completed += result.continuationAction;
+
+                if (cancelImmediately && cancellationToken.CanBeCanceled)
+                {
+                    result.cancellationTokenRegistration = cancellationToken.RegisterWithoutCaptureExecutionContext(state =>
+                    {
+                        var source = (AssetBundleCreateRequestConfiguredSource)state;
+                        source.core.TrySetCanceled(source.cancellationToken);
+                    }, result);
+                }
 
                 TaskTracker.TrackActiveTask(result, 3);
 
@@ -494,6 +619,12 @@ namespace SFramework.Threading.Tasks
 
             public bool MoveNext()
             {
+                // Already completed
+                if (this.completed || this.asyncOperation == null)
+                {
+                    return false;
+                }
+                
                 if (this.cancellationToken.IsCancellationRequested)
                 {
                     this.core.TrySetCanceled(this.cancellationToken);
@@ -514,14 +645,36 @@ namespace SFramework.Threading.Tasks
                 return true;
             }
 
-            bool TryReturn()
+            private bool TryReturn()
             {
                 TaskTracker.RemoveTracking(this);
                 this.core.Reset();
+                this.asyncOperation.completed -= this.continuationAction;
                 this.asyncOperation = default;
                 this.progress = default;
                 this.cancellationToken = default;
+                this.cancellationTokenRegistration.Dispose();
                 return pool.TryPush(this);
+            }
+            
+            private void Continuation(AsyncOperation _)
+            {
+                if (this.completed)
+                {
+                    this.TryReturn();
+                }
+                else
+                {
+                    this.completed = true;
+                    if (this.cancellationToken.IsCancellationRequested)
+                    {
+                        this.core.TrySetCanceled(this.cancellationToken);
+                    }
+                    else
+                    {
+                        this.core.TrySetResult(this.asyncOperation.assetBundle);
+                    }
+                }
             }
         }
 
