@@ -1,0 +1,19 @@
+{
+  "name": "com.summid.stask",
+  "displayName": "STask",
+  "author": {
+    "name": "Summid",
+    "email": "summid@foxmail.com"
+  },
+  "version": "1.0.0",
+  "unity": "2021.3",
+  "description": "Provides a simpler version of UniTask",
+  "keywords": [
+    "async/await",
+    "async",
+    "Task"
+  ],
+  "license": "MIT",
+  "category": "Task",
+  "dependencies": {}
+}
