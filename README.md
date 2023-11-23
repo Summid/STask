@@ -2,6 +2,14 @@
 
 STask 是以学习 UniTask 而建立的教程仓库，[原文地址](https://summid.icu/index.php/2023/10/01/stasktutorials1/)。
 
+仓库导入方式：
+
+- UMP Package：
+  - 在 Package Manager 中通过链接 `https://github.com/Summid/STask.git?path=STask/Assets/Plugins/STask` 添加。
+  - 在 `Packages/manifest.json` 文件中添加：`"com.summid.stask": "https://github.com/Summid/STask.git?path=STask/Assets/Plugins/STask"` 。
+  - 如果想固定使用某个版本，可在链接后添加 `*.*.*` 版本号，用 `#` 连接：`https://github.com/Summid/STask.git#1.0.0` 。
+- 前往 Tag 页面，选择需要的版本并下载 unity package。
+
 
 
 # Unity异步扩展实践（一）——以UniTask库为参考
