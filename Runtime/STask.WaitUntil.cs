@@ -7,9 +7,9 @@ namespace SFramework.Threading.Tasks
     public partial struct STask
     {
         /// <summary> Wait until predicate return true </summary>
-        public static STask WaitUntil(Func<bool> predicate, PlayerLoopTiming timing = PlayerLoopTiming.Update, CancellationToken cancellationToken = default(CancellationToken))
+        public static STask WaitUntil(Func<bool> predicate, PlayerLoopTiming timing = PlayerLoopTiming.Update, CancellationToken cancellationToken = default(CancellationToken), bool cancelImmediately = false)
         {
-            return new STask(WaitUntilPromise.Create(predicate, timing, cancellationToken, out var token), token);
+            return new STask(WaitUntilPromise.Create(predicate, timing, cancellationToken, cancelImmediately, out var token), token);
         }
 
         private sealed class WaitUntilPromise : ISTaskSource, IPlayerLoopItem, ITaskPoolNode<WaitUntilPromise>
@@ -25,12 +25,13 @@ namespace SFramework.Threading.Tasks
 
             private Func<bool> predicate;
             private CancellationToken cancellationToken;
+            private CancellationTokenRegistration cancellationTokenRegistration;
 
             private STaskCompletionSourceCore<object> core;
 
             private WaitUntilPromise() { }
 
-            public static ISTaskSource Create(Func<bool> predicate, PlayerLoopTiming timing, CancellationToken cancellationToken, out short token)
+            public static ISTaskSource Create(Func<bool> predicate, PlayerLoopTiming timing, CancellationToken cancellationToken,bool cancelImmediately, out short token)
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
@@ -44,6 +45,15 @@ namespace SFramework.Threading.Tasks
 
                 result.predicate = predicate;
                 result.cancellationToken = cancellationToken;
+
+                if (cancelImmediately && cancellationToken.CanBeCanceled)
+                {
+                    result.cancellationTokenRegistration = cancellationToken.RegisterWithoutCaptureExecutionContext(state =>
+                    {
+                        var promise = (WaitUntilPromise)state;
+                        promise.core.TrySetCanceled(promise.cancellationToken);
+                    }, result);
+                }
 
                 TaskTracker.TrackActiveTask(result, 3);
 
@@ -111,6 +121,7 @@ namespace SFramework.Threading.Tasks
                 this.core.Reset();
                 this.predicate = default;
                 this.cancellationToken = default;
+                this.cancellationTokenRegistration.Dispose();
                 return pool.TryPush(this);
             }
         }

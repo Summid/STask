@@ -19,27 +19,28 @@ namespace SFramework.Threading.Tasks
     public partial struct STask
     {
         #region NextFrame
+
         public static STask NextFrame()
         {
-            return new STask(NextFramePromise.Create(PlayerLoopTiming.Update, CancellationToken.None, out short token), token);
+            return new STask(NextFramePromise.Create(PlayerLoopTiming.Update, CancellationToken.None, false, out short token), token);
         }
 
         public static STask NextFrame(PlayerLoopTiming timing)
         {
-            return new STask(NextFramePromise.Create(timing, CancellationToken.None, out short token), token);
+            return new STask(NextFramePromise.Create(timing, CancellationToken.None, false, out short token), token);
         }
 
-        public static STask NextFrame(CancellationToken cancellationToken)
+        public static STask NextFrame(CancellationToken cancellationToken, bool cancelImmediately = false)
         {
-            return new STask(NextFramePromise.Create(PlayerLoopTiming.Update, cancellationToken, out short token), token);
+            return new STask(NextFramePromise.Create(PlayerLoopTiming.Update, cancellationToken, cancelImmediately, out short token), token);
         }
 
-        public static STask NextFrame(PlayerLoopTiming timing,CancellationToken cancellationToken)
+        public static STask NextFrame(PlayerLoopTiming timing, CancellationToken cancellationToken, bool cancelImmediately = false)
         {
-            return new STask(NextFramePromise.Create(timing, cancellationToken, out short token), token);
+            return new STask(NextFramePromise.Create(timing, cancellationToken, cancelImmediately, out short token), token);
         }
 
-        sealed class NextFramePromise : ISTaskSource, IPlayerLoopItem, ITaskPoolNode<NextFramePromise>
+        private sealed class NextFramePromise : ISTaskSource, IPlayerLoopItem, ITaskPoolNode<NextFramePromise>
         {
             private static TaskPool<NextFramePromise> pool;
             private NextFramePromise nextNode;
@@ -52,11 +53,12 @@ namespace SFramework.Threading.Tasks
 
             private int frameCount;
             private CancellationToken cancellationToken;
+            private CancellationTokenRegistration cancellationTokenRegistration;
             private STaskCompletionSourceCore<AsyncUnit> core;
 
             private NextFramePromise() { }
 
-            public static ISTaskSource Create(PlayerLoopTiming timing, CancellationToken cancellationToken, out short token)
+            public static ISTaskSource Create(PlayerLoopTiming timing, CancellationToken cancellationToken, bool cancelImmediately, out short token)
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
@@ -70,6 +72,15 @@ namespace SFramework.Threading.Tasks
 
                 result.frameCount = PlayerLoopHelper.IsMainThread ? Time.frameCount : -1;
                 result.cancellationToken = cancellationToken;
+
+                if (cancelImmediately && cancellationToken.CanBeCanceled)
+                {
+                    result.cancellationTokenRegistration = cancellationToken.RegisterWithoutCaptureExecutionContext(state =>
+                    {
+                        var promise = (NextFramePromise)state;
+                        promise.core.TrySetCanceled(promise.cancellationToken);
+                    }, result);
+                }
 
                 TaskTracker.TrackActiveTask(result, 3);
 
@@ -128,23 +139,26 @@ namespace SFramework.Threading.Tasks
                 TaskTracker.RemoveTracking(this);
                 this.core.Reset();
                 this.cancellationToken = default;
+                this.cancellationTokenRegistration.Dispose();
                 return pool.TryPush(this);
             }
         }
+
         #endregion
 
         #region Delay Frame
-        public static STask DelayFrame(int delayFrameCount, PlayerLoopTiming delayTiming = PlayerLoopTiming.Update, CancellationToken cancellationToken = default)
+
+        public static STask DelayFrame(int delayFrameCount, PlayerLoopTiming delayTiming = PlayerLoopTiming.Update, CancellationToken cancellationToken = default, bool cancelImmediately = false)
         {
             if (delayFrameCount < 0)
             {
                 throw new ArgumentOutOfRangeException("Delay does not allow minus delayFrameCount. delayFrameCount:" + delayFrameCount);
             }
 
-            return new STask(DelayFramePromise.Create(delayFrameCount, delayTiming, cancellationToken, out var token), token);
+            return new STask(DelayFramePromise.Create(delayFrameCount, delayTiming, cancellationToken, cancelImmediately, out var token), token);
         }
 
-        sealed class DelayFramePromise : ISTaskSource, IPlayerLoopItem, ITaskPoolNode<DelayFramePromise>
+        private sealed class DelayFramePromise : ISTaskSource, IPlayerLoopItem, ITaskPoolNode<DelayFramePromise>
         {
             private static TaskPool<DelayFramePromise> pool;
             private DelayFramePromise nextNode;
@@ -158,13 +172,14 @@ namespace SFramework.Threading.Tasks
             private int initialFrame;
             private int delayFrameCount;
             private CancellationToken cancellationToken;
+            private CancellationTokenRegistration cancellationTokenRegistration;
 
             private int currentFrameCount;
             private STaskCompletionSourceCore<AsyncUnit> core;
 
             private DelayFramePromise() { }
 
-            public static ISTaskSource Create(int delayFrameCount, PlayerLoopTiming timing, CancellationToken cancellationToken, out short token)
+            public static ISTaskSource Create(int delayFrameCount, PlayerLoopTiming timing, CancellationToken cancellationToken, bool cancelImmediately, out short token)
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
@@ -179,6 +194,15 @@ namespace SFramework.Threading.Tasks
                 result.delayFrameCount = delayFrameCount;
                 result.cancellationToken = cancellationToken;
                 result.initialFrame = PlayerLoopHelper.IsMainThread ? Time.frameCount : -1;
+
+                if (cancelImmediately && cancellationToken.CanBeCanceled)
+                {
+                    result.cancellationTokenRegistration = cancellationToken.RegisterWithoutCaptureExecutionContext(state =>
+                    {
+                        var promise = (DelayFramePromise)state;
+                        promise.core.TrySetCanceled(promise.cancellationToken);
+                    }, result);
+                }
 
                 TaskTracker.TrackActiveTask(result, 3);
 
@@ -225,7 +249,7 @@ namespace SFramework.Threading.Tasks
 
                 if (this.currentFrameCount == 0)
                 {
-                    if (this.delayFrameCount == 0) // same as Yield
+                    if (this.delayFrameCount == 0)// same as Yield
                     {
                         this.core.TrySetResult(AsyncUnit.Default);
                         return false;
@@ -265,6 +289,7 @@ namespace SFramework.Threading.Tasks
                 this.currentFrameCount = default;
                 this.delayFrameCount = default;
                 this.cancellationToken = default;
+                this.cancellationTokenRegistration.Dispose();
                 return pool.TryPush(this);
             }
         }
@@ -272,25 +297,26 @@ namespace SFramework.Threading.Tasks
         #endregion
 
         #region Delay Time
-        public static STask Delay(int millisecondsDelay, bool ignoreTimeScale = false, PlayerLoopTiming delayTiming = PlayerLoopTiming.Update, CancellationToken cancellationToken = default(CancellationToken))
+
+        public static STask Delay(int millisecondsDelay, bool ignoreTimeScale = false, PlayerLoopTiming delayTiming = PlayerLoopTiming.Update, CancellationToken cancellationToken = default(CancellationToken), bool cancelImmediately = false)
         {
             TimeSpan delayTimeSpan = TimeSpan.FromMilliseconds(millisecondsDelay);
-            return Delay(delayTimeSpan, ignoreTimeScale, delayTiming, cancellationToken);
+            return Delay(delayTimeSpan, ignoreTimeScale, delayTiming, cancellationToken, cancelImmediately);
         }
 
-        public static STask Delay(TimeSpan delayTimeSpan, bool ignoreTimeScale, PlayerLoopTiming delayTiming = PlayerLoopTiming.Update, CancellationToken cancellationToken = default(CancellationToken))
+        public static STask Delay(TimeSpan delayTimeSpan, bool ignoreTimeScale, PlayerLoopTiming delayTiming = PlayerLoopTiming.Update, CancellationToken cancellationToken = default(CancellationToken), bool cancelImmediately = false)
         {
             DelayType delayType = ignoreTimeScale ? DelayType.UnscaledDeltaTime : DelayType.DeltaTime;
-            return Delay(delayTimeSpan, delayType, delayTiming, cancellationToken);
+            return Delay(delayTimeSpan, delayType, delayTiming, cancellationToken, cancelImmediately);
         }
 
-        public static STask Delay(int millisecondsDelay, DelayType delayType, PlayerLoopTiming delayTiming = PlayerLoopTiming.Update, CancellationToken cancellationToken = default(CancellationToken))
+        public static STask Delay(int millisecondsDelay, DelayType delayType, PlayerLoopTiming delayTiming = PlayerLoopTiming.Update, CancellationToken cancellationToken = default(CancellationToken), bool cancelImmediately = false)
         {
             TimeSpan delayTimeSpan = TimeSpan.FromMilliseconds(millisecondsDelay);
-            return Delay(delayTimeSpan, delayType, delayTiming, cancellationToken);
+            return Delay(delayTimeSpan, delayType, delayTiming, cancellationToken, cancelImmediately);
         }
 
-        public static STask Delay(TimeSpan delayTimeSpan, DelayType delayType, PlayerLoopTiming delayTiming = PlayerLoopTiming.Update, CancellationToken cancellationToken = default(CancellationToken))
+        public static STask Delay(TimeSpan delayTimeSpan, DelayType delayType, PlayerLoopTiming delayTiming = PlayerLoopTiming.Update, CancellationToken cancellationToken = default(CancellationToken), bool cancelImmediately = false)
         {
             if (delayTimeSpan < TimeSpan.Zero)
             {
@@ -309,28 +335,28 @@ namespace SFramework.Threading.Tasks
             {
                 case DelayType.UnscaledDeltaTime:
                     {
-                        return new STask(DelayIgnoreTimeScalePromise.Create(delayTimeSpan, delayTiming, cancellationToken, out short token), token);
+                        return new STask(DelayIgnoreTimeScalePromise.Create(delayTimeSpan, delayTiming, cancellationToken, cancelImmediately, out short token), token);
                     }
                 case DelayType.RealTime:
                     {
-                        return new STask(DelayRealtimePromise.Create(delayTimeSpan, delayTiming, cancellationToken, out short token), token);
+                        return new STask(DelayRealtimePromise.Create(delayTimeSpan, delayTiming, cancellationToken, cancelImmediately, out short token), token);
                     }
                 case DelayType.DeltaTime:
                 default:
                     {
-                        return new STask(DelayPromise.Create(delayTimeSpan, delayTiming, cancellationToken, out short token), token);
+                        return new STask(DelayPromise.Create(delayTimeSpan, delayTiming, cancellationToken, cancelImmediately, out short token), token);
                     }
             }
         }
 
-        public static STask WaitForSeconds(float duration, bool ignoreTimeScale = false, PlayerLoopTiming delayTiming = PlayerLoopTiming.Update, CancellationToken cancellationToken = default)
+        public static STask WaitForSeconds(float duration, bool ignoreTimeScale = false, PlayerLoopTiming delayTiming = PlayerLoopTiming.Update, CancellationToken cancellationToken = default, bool cancelImmediately = false)
         {
-            return Delay(Mathf.RoundToInt(1000 * duration), ignoreTimeScale, delayTiming, cancellationToken);
+            return Delay(Mathf.RoundToInt(1000 * duration), ignoreTimeScale, delayTiming, cancellationToken, cancelImmediately);
         }
 
-        public static STask WaitForSeconds(int duration, bool ignoreTimeScale = false, PlayerLoopTiming delayTiming = PlayerLoopTiming.Update, CancellationToken cancellationToken = default)
+        public static STask WaitForSeconds(int duration, bool ignoreTimeScale = false, PlayerLoopTiming delayTiming = PlayerLoopTiming.Update, CancellationToken cancellationToken = default, bool cancelImmediately = false)
         {
-            return Delay(1000 * duration, ignoreTimeScale, delayTiming, cancellationToken);
+            return Delay(1000 * duration, ignoreTimeScale, delayTiming, cancellationToken, cancelImmediately);
         }
 
         private sealed class DelayPromise : ISTaskSource, IPlayerLoopItem, ITaskPoolNode<DelayPromise>
@@ -348,19 +374,20 @@ namespace SFramework.Threading.Tasks
             private float delayTimeSpan;
             private float elapsed;
             private CancellationToken cancellationToken;
+            private CancellationTokenRegistration cancellationTokenRegistration;
 
-            STaskCompletionSourceCore<object> core;
+            private STaskCompletionSourceCore<object> core;
 
             private DelayPromise() { }
 
-            public static ISTaskSource Create(TimeSpan delayTimeSpan, PlayerLoopTiming timing, CancellationToken cancellationToken, out short token)
+            public static ISTaskSource Create(TimeSpan delayTimeSpan, PlayerLoopTiming timing, CancellationToken cancellationToken, bool cancelImmediately, out short token)
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
                     return AutoResetSTaskCompletionSource.CreateFromCanceled(cancellationToken, out token);
                 }
-                
-                if(!pool.TryPop(out DelayPromise result))
+
+                if (!pool.TryPop(out DelayPromise result))
                 {
                     result = new DelayPromise();
                 }
@@ -369,6 +396,15 @@ namespace SFramework.Threading.Tasks
                 result.delayTimeSpan = (float)delayTimeSpan.TotalSeconds;
                 result.cancellationToken = cancellationToken;
                 result.initialFrame = PlayerLoopHelper.IsMainThread ? Time.frameCount : -1;
+
+                if (cancelImmediately && cancellationToken.CanBeCanceled)
+                {
+                    result.cancellationTokenRegistration = cancellationToken.RegisterWithoutCaptureExecutionContext(state =>
+                    {
+                        var promise = (DelayPromise)state;
+                        promise.core.TrySetCanceled(promise.cancellationToken);
+                    }, result);
+                }
 
                 TaskTracker.TrackActiveTask(result, 3);
 
@@ -407,7 +443,7 @@ namespace SFramework.Threading.Tasks
 
             public bool MoveNext()
             {
-                if(this.cancellationToken.IsCancellationRequested)
+                if (this.cancellationToken.IsCancellationRequested)
                 {
                     this.core.TrySetCanceled(this.cancellationToken);
                     return false;
@@ -438,6 +474,7 @@ namespace SFramework.Threading.Tasks
                 this.delayTimeSpan = default;
                 this.elapsed = default;
                 this.cancellationToken = default;
+                this.cancellationTokenRegistration.Dispose();
                 return pool.TryPush(this);
             }
         }
@@ -453,16 +490,17 @@ namespace SFramework.Threading.Tasks
                 TaskPool.RegisterSizeGetter(typeof(DelayIgnoreTimeScalePromise), () => pool.Size);
             }
 
-            float delayFrameTimeSpan;
-            float elapsed;
-            int initialFrame;
-            CancellationToken cancellationToken;
+            private float delayFrameTimeSpan;
+            private float elapsed;
+            private int initialFrame;
+            private CancellationToken cancellationToken;
+            private CancellationTokenRegistration cancellationTokenRegistration;
 
-            STaskCompletionSourceCore<object> core;
+            private STaskCompletionSourceCore<object> core;
 
-            DelayIgnoreTimeScalePromise() { }
+            private DelayIgnoreTimeScalePromise() { }
 
-            public static ISTaskSource Create(TimeSpan delayFrameTimeSpan, PlayerLoopTiming timing, CancellationToken cancellationToken, out short token)
+            public static ISTaskSource Create(TimeSpan delayFrameTimeSpan, PlayerLoopTiming timing, CancellationToken cancellationToken, bool cancelImmediately, out short token)
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
@@ -478,6 +516,15 @@ namespace SFramework.Threading.Tasks
                 result.delayFrameTimeSpan = (float)delayFrameTimeSpan.TotalSeconds;
                 result.initialFrame = PlayerLoopHelper.IsMainThread ? Time.frameCount : -1;
                 result.cancellationToken = cancellationToken;
+
+                if (cancelImmediately && cancellationToken.CanBeCanceled)
+                {
+                    result.cancellationTokenRegistration = cancellationToken.RegisterWithoutCaptureExecutionContext(state =>
+                    {
+                        var promise = (DelayIgnoreTimeScalePromise)state;
+                        promise.core.TrySetCanceled(promise.cancellationToken);
+                    }, result);
+                }
 
                 TaskTracker.TrackActiveTask(result, 3);
 
@@ -547,6 +594,7 @@ namespace SFramework.Threading.Tasks
                 this.delayFrameTimeSpan = default;
                 this.elapsed = default;
                 this.cancellationToken = default;
+                this.cancellationTokenRegistration.Dispose();
                 return pool.TryPush(this);
             }
         }
@@ -565,12 +613,13 @@ namespace SFramework.Threading.Tasks
             private long delayTimeSpanTicks;
             private ValueStopwatch stopwatch;
             private CancellationToken cancellationToken;
+            private CancellationTokenRegistration cancellationTokenRegistration;
 
-            STaskCompletionSourceCore<AsyncUnit> core;
+            private STaskCompletionSourceCore<AsyncUnit> core;
 
             private DelayRealtimePromise() { }
 
-            public static ISTaskSource Create(TimeSpan delayTimeSpan, PlayerLoopTiming timing, CancellationToken cancellationToken, out short token)
+            public static ISTaskSource Create(TimeSpan delayTimeSpan, PlayerLoopTiming timing, CancellationToken cancellationToken, bool cancelImmediately, out short token)
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
@@ -586,8 +635,17 @@ namespace SFramework.Threading.Tasks
                 result.delayTimeSpanTicks = delayTimeSpan.Ticks;
                 result.cancellationToken = cancellationToken;
 
+                if (cancelImmediately && cancellationToken.CanBeCanceled)
+                {
+                    result.cancellationTokenRegistration = cancellationToken.RegisterWithoutCaptureExecutionContext(state =>
+                    {
+                        var promise = (DelayRealtimePromise)state;
+                        promise.core.TrySetCanceled(promise.cancellationToken);
+                    }, result);
+                }
+
                 TaskTracker.TrackActiveTask(result, 3);
-                
+
                 PlayerLoopHelper.AddAction(timing, result);
 
                 token = result.core.Version;
@@ -650,12 +708,15 @@ namespace SFramework.Threading.Tasks
                 this.core.Reset();
                 this.stopwatch = default;
                 this.cancellationToken = default;
+                this.cancellationTokenRegistration.Dispose();
                 return pool.TryPush(this);
             }
         }
+
         #endregion
-        
+
         #region Yield
+
         public static YieldAwaitable Yield()
         {
             // optimized for single continuation
@@ -668,14 +729,14 @@ namespace SFramework.Threading.Tasks
             return new YieldAwaitable(timing);
         }
 
-        public static STask Yield(CancellationToken cancellationToken)
+        public static STask Yield(CancellationToken cancellationToken, bool cancelImmediately = false)
         {
-            return new STask(YieldPromise.Create(PlayerLoopTiming.Update, cancellationToken, out var token), token);
+            return new STask(YieldPromise.Create(PlayerLoopTiming.Update, cancellationToken, cancelImmediately, out var token), token);
         }
 
-        public static STask Yield(PlayerLoopTiming timing, CancellationToken cancellationToken)
+        public static STask Yield(PlayerLoopTiming timing, CancellationToken cancellationToken, bool cancelImmediately = false)
         {
-            return new STask(YieldPromise.Create(timing, cancellationToken, out var token), token);
+            return new STask(YieldPromise.Create(timing, cancellationToken, cancelImmediately, out var token), token);
         }
 
         /// <summary>
@@ -694,9 +755,9 @@ namespace SFramework.Threading.Tasks
         /// </summary>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public static STask WaitForFixedUpdate(CancellationToken cancellationToken)
+        public static STask WaitForFixedUpdate(CancellationToken cancellationToken, bool cancelImmediately = false)
         {
-            return STask.Yield(PlayerLoopTiming.LastFixedUpdate, cancellationToken);
+            return STask.Yield(PlayerLoopTiming.LastFixedUpdate, cancellationToken, cancelImmediately);
         }
 
         private sealed class YieldPromise : ISTaskSource, IPlayerLoopItem, ITaskPoolNode<YieldPromise>
@@ -711,11 +772,12 @@ namespace SFramework.Threading.Tasks
             }
 
             private CancellationToken cancellationToken;
+            private CancellationTokenRegistration cancellationTokenRegistration;
             private STaskCompletionSourceCore<object> core;
-            
+
             private YieldPromise() { }
 
-            public static ISTaskSource Create(PlayerLoopTiming timing, CancellationToken cancellationToken, out short token)
+            public static ISTaskSource Create(PlayerLoopTiming timing, CancellationToken cancellationToken, bool cancelImmediately, out short token)
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
@@ -728,6 +790,15 @@ namespace SFramework.Threading.Tasks
                 }
 
                 result.cancellationToken = cancellationToken;
+
+                if (cancelImmediately && cancellationToken.CanBeCanceled)
+                {
+                    result.cancellationTokenRegistration = cancellationToken.RegisterWithoutCaptureExecutionContext(state =>
+                    {
+                        var promise = (YieldPromise)state;
+                        promise.core.TrySetCanceled(promise.cancellationToken);
+                    }, result);
+                }
 
                 TaskTracker.TrackActiveTask(result, 3);
 
@@ -781,24 +852,32 @@ namespace SFramework.Threading.Tasks
                 TaskTracker.RemoveTracking(this);
                 this.core.Reset();
                 this.cancellationToken = default;
+                this.cancellationTokenRegistration.Dispose();
                 return pool.TryPush(this);
             }
         }
+
         #endregion
-        
+
         #region WaitForEndOfFrame
-        public static STask WaitForEndOfFrame(MonoBehaviour coroutineRunner, CancellationToken cancellationToken = default)
+
+        public static STask WaitForEndOfFrame(MonoBehaviour coroutineRunner)
         {
-            return new STask(WaitForEndOfFramePromise.Create(coroutineRunner, cancellationToken, out var token), token);
+            return new STask(WaitForEndOfFramePromise.Create(coroutineRunner, CancellationToken.None, false, out var token), token);
         }
-        
+
+        public static STask WaitForEndOfFrame(MonoBehaviour coroutineRunner, CancellationToken cancellationToken = default, bool cancelImmediately = false)
+        {
+            return new STask(WaitForEndOfFramePromise.Create(coroutineRunner, cancellationToken, cancelImmediately, out var token), token);
+        }
+
         #if UNITY_2023_1_OR_NEWER
         public static async STask WaitForEndOfFrame(CancellationToken cancellationToken = default)
         {
             await Awaitable.EndOfFrameAsync(cancellationToken);
         }
         #endif
-        
+
         private sealed class WaitForEndOfFramePromise : ISTaskSource, ITaskPoolNode<WaitForEndOfFramePromise>, System.Collections.IEnumerator
         {
             private static TaskPool<WaitForEndOfFramePromise> pool;
@@ -811,11 +890,12 @@ namespace SFramework.Threading.Tasks
             }
 
             private CancellationToken cancellationToken;
+            private CancellationTokenRegistration cancellationTokenRegistration;
             private STaskCompletionSourceCore<object> core;
-            
+
             private WaitForEndOfFramePromise() { }
 
-            public static ISTaskSource Create(MonoBehaviour coroutineRunner, CancellationToken cancellationToken, out short token)
+            public static ISTaskSource Create(MonoBehaviour coroutineRunner, CancellationToken cancellationToken, bool cancelImmediately, out short token)
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
@@ -828,6 +908,15 @@ namespace SFramework.Threading.Tasks
                 }
 
                 result.cancellationToken = cancellationToken;
+
+                if (cancelImmediately && cancellationToken.CanBeCanceled)
+                {
+                    result.cancellationTokenRegistration = cancellationToken.RegisterWithoutCaptureExecutionContext(state =>
+                    {
+                        var promise = (WaitForEndOfFramePromise)state;
+                        promise.core.TrySetCanceled(promise.cancellationToken);
+                    }, result);
+                }
 
                 TaskTracker.TrackActiveTask(result, 3);
 
@@ -868,24 +957,25 @@ namespace SFramework.Threading.Tasks
             {
                 TaskTracker.RemoveTracking(this);
                 this.core.Reset();
-                this.Reset(); // Reset Enumerator
+                this.Reset();// Reset Enumerator
                 this.cancellationToken = default;
+                this.cancellationTokenRegistration.Dispose();
                 return pool.TryPush(this);
             }
-            
+
             // Coroutine Runner implementation
 
             private static readonly WaitForEndOfFrame waitForEndOfFrameYieldInstruction = new WaitForEndOfFrame();
             private bool isFirst = true;
 
             object System.Collections.IEnumerator.Current => waitForEndOfFrameYieldInstruction;
-            
+
             bool System.Collections.IEnumerator.MoveNext()
             {
                 if (this.isFirst)
                 {
                     this.isFirst = false;
-                    return true; // start WaitForEndOfFrame
+                    return true;// start WaitForEndOfFrame
                 }
 
                 if (this.cancellationToken.IsCancellationRequested)
@@ -897,12 +987,13 @@ namespace SFramework.Threading.Tasks
                 this.core.TrySetResult(null);
                 return false;
             }
-            
+
             public void Reset()
             {
                 this.isFirst = true;
             }
         }
+
         #endregion
     }
 
