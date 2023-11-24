@@ -30,7 +30,7 @@ namespace SFramework.Threading.Tasks
 
     /// <summary>
     /// 有返回值版<see cref="ISTaskSource"/>，覆盖GetResult(short token)；
-    /// 协变接口（out 修饰 T），支持 ISTaskSource[Base] = new IStaskSource[Derive]，T 只能用作函数返回值
+    /// 协变接口（out 修饰 T），支持 ISTaskSource[Base] = new ISTaskSource[Derive]
     /// <see href="https://learn.microsoft.com/zh-cn/dotnet/csharp/programming-guide/concepts/covariance-contravariance/">参考链接</see>
     /// </summary>
     /// <typeparam name="T"></typeparam>
