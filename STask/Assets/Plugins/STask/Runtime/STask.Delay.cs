@@ -55,6 +55,7 @@ namespace SFramework.Threading.Tasks
             private CancellationToken cancellationToken;
             private CancellationTokenRegistration cancellationTokenRegistration;
             private STaskCompletionSourceCore<AsyncUnit> core;
+            private bool cancelImmediately;
 
             private NextFramePromise() { }
 
@@ -72,6 +73,7 @@ namespace SFramework.Threading.Tasks
 
                 result.frameCount = PlayerLoopHelper.IsMainThread ? Time.frameCount : -1;
                 result.cancellationToken = cancellationToken;
+                result.cancelImmediately = cancelImmediately;
 
                 if (cancelImmediately && cancellationToken.CanBeCanceled)
                 {
@@ -98,7 +100,10 @@ namespace SFramework.Threading.Tasks
                 }
                 finally
                 {
-                    this.TryReturn();
+                    if (!(this.cancelImmediately && this.cancellationToken.IsCancellationRequested))
+                    {
+                        this.TryReturn();
+                    }
                 }
             }
 
@@ -140,6 +145,7 @@ namespace SFramework.Threading.Tasks
                 this.core.Reset();
                 this.cancellationToken = default;
                 this.cancellationTokenRegistration.Dispose();
+                this.cancelImmediately = default;
                 return pool.TryPush(this);
             }
         }
@@ -173,6 +179,7 @@ namespace SFramework.Threading.Tasks
             private int delayFrameCount;
             private CancellationToken cancellationToken;
             private CancellationTokenRegistration cancellationTokenRegistration;
+            private bool cancelImmediately;
 
             private int currentFrameCount;
             private STaskCompletionSourceCore<AsyncUnit> core;
@@ -194,6 +201,7 @@ namespace SFramework.Threading.Tasks
                 result.delayFrameCount = delayFrameCount;
                 result.cancellationToken = cancellationToken;
                 result.initialFrame = PlayerLoopHelper.IsMainThread ? Time.frameCount : -1;
+                result.cancelImmediately = cancelImmediately;
 
                 if (cancelImmediately && cancellationToken.CanBeCanceled)
                 {
@@ -220,7 +228,10 @@ namespace SFramework.Threading.Tasks
                 }
                 finally
                 {
-                    this.TryReturn();
+                    if (!(this.cancelImmediately && this.cancellationToken.IsCancellationRequested))
+                    {
+                        this.TryReturn();
+                    }
                 }
             }
 
@@ -290,6 +301,7 @@ namespace SFramework.Threading.Tasks
                 this.delayFrameCount = default;
                 this.cancellationToken = default;
                 this.cancellationTokenRegistration.Dispose();
+                this.cancelImmediately = default;
                 return pool.TryPush(this);
             }
         }
@@ -375,6 +387,7 @@ namespace SFramework.Threading.Tasks
             private float elapsed;
             private CancellationToken cancellationToken;
             private CancellationTokenRegistration cancellationTokenRegistration;
+            private bool cancelImmediately;
 
             private STaskCompletionSourceCore<object> core;
 
@@ -396,6 +409,7 @@ namespace SFramework.Threading.Tasks
                 result.delayTimeSpan = (float)delayTimeSpan.TotalSeconds;
                 result.cancellationToken = cancellationToken;
                 result.initialFrame = PlayerLoopHelper.IsMainThread ? Time.frameCount : -1;
+                result.cancelImmediately = cancelImmediately;
 
                 if (cancelImmediately && cancellationToken.CanBeCanceled)
                 {
@@ -422,7 +436,10 @@ namespace SFramework.Threading.Tasks
                 }
                 finally
                 {
-                    this.TryReturn();
+                    if (!(this.cancelImmediately && this.cancellationToken.IsCancellationRequested))
+                    {
+                        this.TryReturn();
+                    }
                 }
             }
 
@@ -475,6 +492,7 @@ namespace SFramework.Threading.Tasks
                 this.elapsed = default;
                 this.cancellationToken = default;
                 this.cancellationTokenRegistration.Dispose();
+                this.cancelImmediately = default;
                 return pool.TryPush(this);
             }
         }
@@ -495,6 +513,7 @@ namespace SFramework.Threading.Tasks
             private int initialFrame;
             private CancellationToken cancellationToken;
             private CancellationTokenRegistration cancellationTokenRegistration;
+            private bool cancelImmediately;
 
             private STaskCompletionSourceCore<object> core;
 
@@ -516,6 +535,7 @@ namespace SFramework.Threading.Tasks
                 result.delayFrameTimeSpan = (float)delayFrameTimeSpan.TotalSeconds;
                 result.initialFrame = PlayerLoopHelper.IsMainThread ? Time.frameCount : -1;
                 result.cancellationToken = cancellationToken;
+                result.cancelImmediately = cancelImmediately;
 
                 if (cancelImmediately && cancellationToken.CanBeCanceled)
                 {
@@ -542,7 +562,10 @@ namespace SFramework.Threading.Tasks
                 }
                 finally
                 {
-                    this.TryReturn();
+                    if (!(this.cancelImmediately && this.cancellationToken.IsCancellationRequested))
+                    {
+                        this.TryReturn();
+                    }
                 }
             }
 
@@ -595,6 +618,7 @@ namespace SFramework.Threading.Tasks
                 this.elapsed = default;
                 this.cancellationToken = default;
                 this.cancellationTokenRegistration.Dispose();
+                this.cancelImmediately = default;
                 return pool.TryPush(this);
             }
         }
@@ -614,6 +638,7 @@ namespace SFramework.Threading.Tasks
             private ValueStopwatch stopwatch;
             private CancellationToken cancellationToken;
             private CancellationTokenRegistration cancellationTokenRegistration;
+            private bool cancelImmediately;
 
             private STaskCompletionSourceCore<AsyncUnit> core;
 
@@ -634,6 +659,7 @@ namespace SFramework.Threading.Tasks
                 result.stopwatch = ValueStopwatch.StartNew();
                 result.delayTimeSpanTicks = delayTimeSpan.Ticks;
                 result.cancellationToken = cancellationToken;
+                result.cancelImmediately = cancelImmediately;
 
                 if (cancelImmediately && cancellationToken.CanBeCanceled)
                 {
@@ -660,7 +686,10 @@ namespace SFramework.Threading.Tasks
                 }
                 finally
                 {
-                    this.TryReturn();
+                    if (!(this.cancelImmediately && this.cancellationToken.IsCancellationRequested))
+                    {
+                        this.TryReturn();
+                    }
                 }
             }
 
@@ -709,6 +738,7 @@ namespace SFramework.Threading.Tasks
                 this.stopwatch = default;
                 this.cancellationToken = default;
                 this.cancellationTokenRegistration.Dispose();
+                this.cancelImmediately = default;
                 return pool.TryPush(this);
             }
         }
@@ -773,6 +803,7 @@ namespace SFramework.Threading.Tasks
 
             private CancellationToken cancellationToken;
             private CancellationTokenRegistration cancellationTokenRegistration;
+            private bool cancelImmediately;
             private STaskCompletionSourceCore<object> core;
 
             private YieldPromise() { }
@@ -790,6 +821,7 @@ namespace SFramework.Threading.Tasks
                 }
 
                 result.cancellationToken = cancellationToken;
+                result.cancelImmediately = cancelImmediately;
 
                 if (cancelImmediately && cancellationToken.CanBeCanceled)
                 {
@@ -816,7 +848,10 @@ namespace SFramework.Threading.Tasks
                 }
                 finally
                 {
-                    this.TryReturn();
+                    if (!(this.cancelImmediately && this.cancellationToken.IsCancellationRequested))
+                    {
+                        this.TryReturn();
+                    }
                 }
             }
 
@@ -853,6 +888,7 @@ namespace SFramework.Threading.Tasks
                 this.core.Reset();
                 this.cancellationToken = default;
                 this.cancellationTokenRegistration.Dispose();
+                this.cancelImmediately = default;
                 return pool.TryPush(this);
             }
         }
@@ -892,6 +928,7 @@ namespace SFramework.Threading.Tasks
             private CancellationToken cancellationToken;
             private CancellationTokenRegistration cancellationTokenRegistration;
             private STaskCompletionSourceCore<object> core;
+            private bool cancelImmediately;
 
             private WaitForEndOfFramePromise() { }
 
@@ -908,6 +945,7 @@ namespace SFramework.Threading.Tasks
                 }
 
                 result.cancellationToken = cancellationToken;
+                result.cancelImmediately = cancelImmediately;
 
                 if (cancelImmediately && cancellationToken.CanBeCanceled)
                 {
@@ -934,7 +972,10 @@ namespace SFramework.Threading.Tasks
                 }
                 finally
                 {
-                    this.TryReturn();
+                    if (!(this.cancelImmediately && this.cancellationToken.IsCancellationRequested))
+                    {
+                        this.TryReturn();
+                    }
                 }
             }
 
@@ -960,6 +1001,7 @@ namespace SFramework.Threading.Tasks
                 this.Reset();// Reset Enumerator
                 this.cancellationToken = default;
                 this.cancellationTokenRegistration.Dispose();
+                this.cancelImmediately = default;
                 return pool.TryPush(this);
             }
 

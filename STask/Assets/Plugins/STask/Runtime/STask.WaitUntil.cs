@@ -26,6 +26,7 @@ namespace SFramework.Threading.Tasks
             private Func<bool> predicate;
             private CancellationToken cancellationToken;
             private CancellationTokenRegistration cancellationTokenRegistration;
+            private bool cancelImmediately;
 
             private STaskCompletionSourceCore<object> core;
 
@@ -45,6 +46,7 @@ namespace SFramework.Threading.Tasks
 
                 result.predicate = predicate;
                 result.cancellationToken = cancellationToken;
+                result.cancelImmediately = cancelImmediately;
 
                 if (cancelImmediately && cancellationToken.CanBeCanceled)
                 {
@@ -71,7 +73,10 @@ namespace SFramework.Threading.Tasks
                 }
                 finally
                 {
-                    this.TryReturn();
+                    if (!(this.cancelImmediately && this.cancellationToken.IsCancellationRequested))
+                    {
+                        this.TryReturn();
+                    }
                 }
             }
 
@@ -122,6 +127,7 @@ namespace SFramework.Threading.Tasks
                 this.predicate = default;
                 this.cancellationToken = default;
                 this.cancellationTokenRegistration.Dispose();
+                this.cancelImmediately = default;
                 return pool.TryPush(this);
             }
         }
