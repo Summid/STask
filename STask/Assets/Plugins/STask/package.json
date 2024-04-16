@@ -5,7 +5,7 @@
     "name": "Summid",
     "email": "summid@foxmail.com"
   },
-  "version": "1.0.2",
+  "version": "1.0.3",
   "unity": "2021.3",
   "description": "Provides a simpler version of UniTask",
   "keywords": [
