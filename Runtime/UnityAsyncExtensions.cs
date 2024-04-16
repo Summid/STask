@@ -94,6 +94,7 @@ namespace SFramework.Threading.Tasks
             private IProgress<float> progress;
             private CancellationToken cancellationToken;
             private CancellationTokenRegistration cancellationTokenRegistration;
+            private bool cancelImmediately;
             private bool completed;
 
             private STaskCompletionSourceCore<AsyncUnit> core;
@@ -120,6 +121,7 @@ namespace SFramework.Threading.Tasks
                 result.asyncOperation = asyncOperation;
                 result.progress = progress;
                 result.cancellationToken = cancellationToken;
+                result.cancelImmediately = cancelImmediately;
                 result.completed = false;
 
                 asyncOperation.completed += result.continuationAction;
@@ -149,7 +151,10 @@ namespace SFramework.Threading.Tasks
                 }
                 finally
                 {
-                    this.TryReturn();
+                    if (!(this.cancelImmediately && this.cancellationToken.IsCancellationRequested))
+                    {
+                        this.TryReturn();
+                    }
                 }
             }
 
@@ -205,6 +210,7 @@ namespace SFramework.Threading.Tasks
                 this.progress = default;
                 this.cancellationToken = default;
                 this.cancellationTokenRegistration.Dispose();
+                this.cancelImmediately = default;
                 return pool.TryPush(this);
             }
 
@@ -212,19 +218,16 @@ namespace SFramework.Threading.Tasks
             {
                 if (this.completed)
                 {
-                    this.TryReturn();
+                    return;
+                }
+                this.completed = true;
+                if (this.cancellationToken.IsCancellationRequested)
+                {
+                    this.core.TrySetCanceled(this.cancellationToken);
                 }
                 else
                 {
-                    this.completed = true;
-                    if (this.cancellationToken.IsCancellationRequested)
-                    {
-                        this.core.TrySetCanceled(this.cancellationToken);
-                    }
-                    else
-                    {
-                        this.core.TrySetResult(AsyncUnit.Default);
-                    }
+                    this.core.TrySetResult(AsyncUnit.Default);
                 }
             }
         }
@@ -317,6 +320,7 @@ namespace SFramework.Threading.Tasks
             private IProgress<float> progress;
             private CancellationToken cancellationToken;
             private CancellationTokenRegistration cancellationTokenRegistration;
+            private bool cancelImmediately;
             private bool completed;
 
             private STaskCompletionSourceCore<UnityEngine.Object> core;
@@ -343,6 +347,7 @@ namespace SFramework.Threading.Tasks
                 result.asyncOperation = asyncOperation;
                 result.progress = progress;
                 result.cancellationToken = cancellationToken;
+                result.cancelImmediately = cancelImmediately;
                 result.completed = false;
 
                 asyncOperation.completed += result.continuationAction;
@@ -372,7 +377,10 @@ namespace SFramework.Threading.Tasks
                 }
                 finally
                 {
-                    this.TryReturn();
+                    if (!(this.cancelImmediately && this.cancellationToken.IsCancellationRequested))
+                    {
+                        this.TryReturn();
+                    }
                 }
             }
 
@@ -433,6 +441,7 @@ namespace SFramework.Threading.Tasks
                 this.progress = default;
                 this.cancellationToken = default;
                 this.cancellationTokenRegistration.Dispose();
+                this.cancelImmediately = default;
                 return pool.TryPush(this);
             }
 
@@ -440,19 +449,16 @@ namespace SFramework.Threading.Tasks
             {
                 if (this.completed)
                 {
-                    this.TryReturn();
+                    return;
+                }
+                this.completed = true;
+                if (this.cancellationToken.IsCancellationRequested)
+                {
+                    this.core.TrySetCanceled(this.cancellationToken);
                 }
                 else
                 {
-                    this.completed = true;
-                    if (this.cancellationToken.IsCancellationRequested)
-                    {
-                        this.core.TrySetCanceled(this.cancellationToken);
-                    }
-                    else
-                    {
-                        this.core.TrySetResult(this.asyncOperation.asset);
-                    }
+                    this.core.TrySetResult(this.asyncOperation.asset);
                 }
             }
         }
@@ -545,6 +551,7 @@ namespace SFramework.Threading.Tasks
             private IProgress<float> progress;
             private CancellationToken cancellationToken;
             private CancellationTokenRegistration cancellationTokenRegistration;
+            private bool cancelImmediately;
             private bool completed;
 
             private STaskCompletionSourceCore<AssetBundle> core;
@@ -571,6 +578,7 @@ namespace SFramework.Threading.Tasks
                 result.asyncOperation = asyncOperation;
                 result.progress = progress;
                 result.cancellationToken = cancellationToken;
+                result.cancelImmediately = cancelImmediately;
                 result.completed = false;
 
                 asyncOperation.completed += result.continuationAction;
@@ -600,7 +608,10 @@ namespace SFramework.Threading.Tasks
                 }
                 finally
                 {
-                    this.TryReturn();
+                    if (!(this.cancelImmediately && this.cancellationToken.IsCancellationRequested))
+                    {
+                        this.TryReturn();
+                    }
                 }
             }
 
@@ -661,6 +672,7 @@ namespace SFramework.Threading.Tasks
                 this.progress = default;
                 this.cancellationToken = default;
                 this.cancellationTokenRegistration.Dispose();
+                this.cancelImmediately = default;
                 return pool.TryPush(this);
             }
 
@@ -668,19 +680,16 @@ namespace SFramework.Threading.Tasks
             {
                 if (this.completed)
                 {
-                    this.TryReturn();
+                    return;
+                }
+                this.completed = true;
+                if (this.cancellationToken.IsCancellationRequested)
+                {
+                    this.core.TrySetCanceled(this.cancellationToken);
                 }
                 else
                 {
-                    this.completed = true;
-                    if (this.cancellationToken.IsCancellationRequested)
-                    {
-                        this.core.TrySetCanceled(this.cancellationToken);
-                    }
-                    else
-                    {
-                        this.core.TrySetResult(this.asyncOperation.assetBundle);
-                    }
+                    this.core.TrySetResult(this.asyncOperation.assetBundle);
                 }
             }
         }
