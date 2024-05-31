@@ -14,7 +14,6 @@ namespace SFramework.Threading.Tasks.Internal
 #if UNITY_EDITOR
 
         private static int trackingId = 0;
-        private static bool dirty;
         
         public const string EnableAutoReloadKey = "STaskTrackerWindow_EnableAutoReloadKey";
         public const string EnableTrackingKey = "STaskTrackerWindow_EnableTrackingKey";
@@ -96,7 +95,9 @@ namespace SFramework.Threading.Tasks.Internal
             bool success = tracking.TryRemove(task);
 #endif
         }
-
+        
+        private static bool dirty;
+        
         public static bool CheckAndResetDirty()
         {
             bool current = dirty;
