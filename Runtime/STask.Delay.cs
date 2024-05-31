@@ -279,7 +279,7 @@ namespace SFramework.Threading.Tasks
                             return true;
                         }
 #else
-                        reutrn true;
+                        return true;
 #endif
                     }
                 }
